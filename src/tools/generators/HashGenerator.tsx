@@ -1,7 +1,8 @@
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { Textarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 import { Copy, Check } from "lucide-react"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 
 const algorithms = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"] as const
 type Algorithm = typeof algorithms[number]
@@ -17,7 +18,7 @@ async function hashText(text: string, algo: Algorithm): Promise<string> {
 export function HashGenerator() {
   const [input, setInput] = useState("")
   const [results, setResults] = useState<Record<string, string>>({})
-  const [copied, setCopied] = useState<string | null>(null)
+  const [copied, handleCopy] = useCopyToClipboard()
 
   const handleInputChange = async (value: string) => {
     setInput(value)
@@ -25,20 +26,11 @@ export function HashGenerator() {
       setResults({})
       return
     }
-    const newResults: Record<string, string> = {}
-    for (const algo of algorithms) {
-      newResults[algo] = await hashText(value, algo)
-    }
-    setResults(newResults)
+    const entries = await Promise.all(
+      algorithms.map(async (algo) => [algo, await hashText(value, algo)] as const)
+    )
+    setResults(Object.fromEntries(entries))
   }
-
-  const handleCopy = useCallback(async (algo: string) => {
-    const text = results[algo]
-    if (!text) return
-    await navigator.clipboard.writeText(text)
-    setCopied(algo)
-    setTimeout(() => setCopied(null), 2000)
-  }, [results])
 
   return (
     <div className="flex h-full flex-col">
@@ -63,9 +55,9 @@ export function HashGenerator() {
                   variant="ghost"
                   size="icon"
                   className="shrink-0 cursor-pointer"
-                  onClick={() => handleCopy(algo)}
+                  onClick={() => handleCopy(results[algo])}
                 >
-                  {copied === algo ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 </Button>
               </div>
             ))}

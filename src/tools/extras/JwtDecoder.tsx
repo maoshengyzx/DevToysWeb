@@ -2,6 +2,7 @@ import { useState, useMemo } from "react"
 import { Textarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 import { Copy, Check } from "lucide-react"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 
 function decodeJwt(token: string): { header: object; payload: object; error?: string } | null {
   try {
@@ -28,7 +29,8 @@ function decodeJwt(token: string): { header: object; payload: object; error?: st
 
 export function JwtDecoder() {
   const [input, setInput] = useState("")
-  const [copied, setCopied] = useState<string | null>(null)
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [, handleCopyBase] = useCopyToClipboard()
 
   const decoded = useMemo(() => {
     if (!input.trim()) return null
@@ -36,9 +38,9 @@ export function JwtDecoder() {
   }, [input])
 
   const handleCopy = async (text: string, label: string) => {
-    await navigator.clipboard.writeText(text)
-    setCopied(label)
-    setTimeout(() => setCopied(null), 2000)
+    await handleCopyBase(text)
+    setCopiedKey(label)
+    setTimeout(() => setCopiedKey(null), 2000)
   }
 
   return (
@@ -66,8 +68,8 @@ export function JwtDecoder() {
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-foreground">Header</label>
                     <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(JSON.stringify(decoded.header, null, 2), "header")}>
-                      {copied === "header" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      {copied === "header" ? "Copied!" : "Copy"}
+                      {copiedKey === "header" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copiedKey === "header" ? "Copied!" : "Copy"}
                     </Button>
                   </div>
                   <pre className="overflow-auto rounded-md border border-border bg-muted p-3 text-xs font-mono text-foreground">
@@ -78,8 +80,8 @@ export function JwtDecoder() {
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-foreground">Payload</label>
                     <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(JSON.stringify(decoded.payload, null, 2), "payload")}>
-                      {copied === "payload" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      {copied === "payload" ? "Copied!" : "Copy"}
+                      {copiedKey === "payload" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copiedKey === "payload" ? "Copied!" : "Copy"}
                     </Button>
                   </div>
                   <pre className="overflow-auto rounded-md border border-border bg-muted p-3 text-xs font-mono text-foreground">

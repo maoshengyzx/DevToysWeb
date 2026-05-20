@@ -10,6 +10,7 @@ import {
   Clock,
   PanelLeftClose,
   PanelLeft,
+  X,
 } from "lucide-react"
 import {
   SidebarProvider,
@@ -96,6 +97,7 @@ function App() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set(loadList(FAVORITES_KEY)))
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => {
     document.documentElement.classList.add("dark")
     return true
@@ -108,6 +110,7 @@ function App() {
   }, [activeToolId])
 
   const handleSelectTool = (id: string) => {
+    setMobileMenuOpen(false)
     navigate(`/${id}`)
   }
 
@@ -155,10 +158,16 @@ function App() {
 
   return (
     <div className="flex h-screen">
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
       <aside
-        className={`shrink-0 border-r border-sidebar-border bg-sidebar-background transition-all duration-200 ${
-          sidebarCollapsed ? "w-14" : "w-64"
-        } hidden md:flex flex-col`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-sidebar-border bg-sidebar-background transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        } md:flex md:flex-col md:shrink-0 ${sidebarCollapsed ? "md:w-14" : "md:w-64"}`}
       >
         <SidebarProvider>
           <Sidebar className={sidebarCollapsed ? "w-14" : "w-64"}>
@@ -172,6 +181,12 @@ function App() {
                     DevToysWeb
                   </span>
                 )}
+                <button
+                  className="ml-auto md:hidden rounded-md p-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             </SidebarHeader>
 
@@ -312,7 +327,7 @@ function App() {
               <Button
                 variant="ghost"
                 size={sidebarCollapsed ? "icon" : "sm"}
-                className={sidebarCollapsed ? "justify-center cursor-pointer" : "w-full justify-start gap-2 cursor-pointer"}
+                className={`${sidebarCollapsed ? "justify-center" : "w-full justify-start gap-2"} cursor-pointer hidden md:flex`}
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               >
                 {sidebarCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -333,12 +348,23 @@ function App() {
       </aside>
 
       <main className="flex-1 overflow-auto bg-background">
+        {!activeTool && (
+          <div className="flex items-center gap-3 border-b border-border px-4 py-3 md:hidden">
+            <button
+              className="rounded-md p-1.5 text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <PanelLeft className="h-5 w-5" />
+            </button>
+            <span className="text-sm font-semibold">DevToysWeb</span>
+          </div>
+        )}
         {activeTool ? (
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
               <button
                 className="md:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
-                onClick={() => navigate("/")}
+                onClick={() => setMobileMenuOpen(true)}
               >
                 <PanelLeft className="h-5 w-5" />
               </button>

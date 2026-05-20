@@ -1,13 +1,15 @@
 import { useState, useMemo } from "react"
 import { Textarea } from "@/components/ui/shared"
 import { marked } from "marked"
+import DOMPurify from "dompurify"
 
 export function MarkdownPreview() {
   const [input, setInput] = useState("# Hello World\n\nThis is **markdown** preview.\n\n- Item 1\n- Item 2\n- Item 3\n\n```\nconst greeting = 'Hello';\n```")
 
   const html = useMemo(() => {
     try {
-      return marked.parse(input) as string
+      const raw = marked.parse(input) as string
+      return DOMPurify.sanitize(raw)
     } catch {
       return "<p>Invalid markdown</p>"
     }

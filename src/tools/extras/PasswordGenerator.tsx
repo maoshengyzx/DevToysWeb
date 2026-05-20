@@ -1,11 +1,40 @@
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, RefreshCw } from "lucide-react"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 
 const LOWERCASE = "abcdefghijklmnopqrstuvwxyz"
 const UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const NUMBERS = "0123456789"
 const SYMBOLS = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+
+function generatePassword(length: number, useLower: boolean, useUpper: boolean, useNum: boolean, useSym: boolean): string {
+  let charset = ""
+  const required: string[] = []
+  if (useLower) { charset += LOWERCASE; required.push(LOWERCASE) }
+  if (useUpper) { charset += UPPERCASE; required.push(UPPERCASE) }
+  if (useNum) { charset += NUMBERS; required.push(NUMBERS) }
+  if (useSym) { charset += SYMBOLS; required.push(SYMBOLS) }
+  if (!charset) return ""
+
+  const array = new Uint32Array(length)
+  crypto.getRandomValues(array)
+  let result = ""
+
+  for (let i = 0; i < required.length && i < length; i++) {
+    result += required[i][array[i] % required[i].length]
+  }
+  for (let i = required.length; i < length; i++) {
+    result += charset[array[i] % charset.length]
+  }
+
+  const arr = result.split("")
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = array[i] % (i + 1)
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr.join("")
+}
 
 export function PasswordGenerator() {
   const [length, setLength] = useState(16)
@@ -13,44 +42,12 @@ export function PasswordGenerator() {
   const [useUppercase, setUseUppercase] = useState(true)
   const [useNumbers, setUseNumbers] = useState(true)
   const [useSymbols, setUseSymbols] = useState(true)
-  const [password, setPassword] = useState("")
-  const [copied, setCopied] = useState(false)
+  const [password, setPassword] = useState(() => generatePassword(16, true, true, true, true))
+  const [copied, handleCopy] = useCopyToClipboard()
 
   const generate = () => {
-    let charset = ""
-    const required: string[] = []
-    if (useLowercase) { charset += LOWERCASE; required.push(LOWERCASE) }
-    if (useUppercase) { charset += UPPERCASE; required.push(UPPERCASE) }
-    if (useNumbers) { charset += NUMBERS; required.push(NUMBERS) }
-    if (useSymbols) { charset += SYMBOLS; required.push(SYMBOLS) }
-    if (!charset) { setPassword(""); return }
-
-    const array = new Uint32Array(length)
-    crypto.getRandomValues(array)
-    let result = ""
-
-    for (let i = 0; i < required.length && i < length; i++) {
-      result += required[i][array[i] % required[i].length]
-    }
-    for (let i = required.length; i < length; i++) {
-      result += charset[array[i] % charset.length]
-    }
-
-    const arr = result.split("")
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = array[i] % (i + 1)
-      ;[arr[i], arr[j]] = [arr[j], arr[i]]
-    }
-    setPassword(arr.join(""))
-    setCopied(false)
+    setPassword(generatePassword(length, useLowercase, useUppercase, useNumbers, useSymbols))
   }
-
-  const handleCopy = useCallback(async () => {
-    if (!password) return
-    await navigator.clipboard.writeText(password)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }, [password])
 
   const strength = (() => {
     if (!password) return { label: "", color: "" }
@@ -114,7 +111,7 @@ export function PasswordGenerator() {
               <RefreshCw className="h-3.5 w-3.5" />
               Generate
             </Button>
-            <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleCopy} disabled={!password}>
+            <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(password)} disabled={!password}>
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
               {copied ? "Copied!" : "Copy"}
             </Button>

@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
-
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+import { CronExpressionParser } from "cron-parser"
+import cronstrue from "cronstrue"
 
 const PRESETS = [
   { label: "Every minute", cron: "* * * * *" },
@@ -13,75 +12,26 @@ const PRESETS = [
   { label: "Every month on the 1st", cron: "0 0 1 * *" },
 ]
 
-function parseCronField(field: string, min: number, max: number): number[] {
-  const values: number[] = []
-  const parts = field.split(",")
-
-  for (const part of parts) {
-    if (part === "*") {
-      for (let i = min; i <= max; i++) values.push(i)
-    } else if (part.includes("/")) {
-      const [startStr, stepStr] = part.split("/")
-      const start = startStr === "*" ? min : parseInt(startStr)
-      const step = parseInt(stepStr)
-      for (let i = start; i <= max; i += step) values.push(i)
-    } else if (part.includes("-")) {
-      const [startStr, endStr] = part.split("-")
-      const start = parseInt(startStr)
-      const end = parseInt(endStr)
-      for (let i = start; i <= end; i++) values.push(i)
-    } else {
-      values.push(parseInt(part))
-    }
-  }
-  return [...new Set(values)].sort((a, b) => a - b)
-}
-
-function describeCron(cron: string): string {
-  const parts = cron.trim().split(/\s+/)
-  if (parts.length !== 5) return "Invalid cron expression"
-
-  const minutes = parseCronField(parts[0], 0, 59)
-  const hours = parseCronField(parts[1], 0, 23)
-  const doms = parseCronField(parts[2], 1, 31)
-  const months = parseCronField(parts[3], 1, 12)
-  const dows = parseCronField(parts[4], 0, 6)
-
-  const desc: string[] = []
-
-  if (parts[4] !== "*") {
-    desc.push(`on ${dows.map((d) => DAY_NAMES[d]).join(", ")}`)
-  }
-  if (parts[3] !== "*") {
-    desc.push(`in ${months.map((m) => MONTH_NAMES[m - 1]).join(", ")}`)
-  }
-  if (parts[2] !== "*") {
-    desc.push(`on day(s) ${doms.join(", ")} of the month`)
-  }
-
-  if (parts[1] === "*" && parts[0] === "*") {
-    desc.unshift("Every minute")
-  } else if (parts[1] === "*") {
-    desc.unshift(`At minute(s) ${minutes.join(", ")}`)
-  } else if (parts[0] === "*" || parts[0].startsWith("*/")) {
-    desc.unshift(`At ${hours.map((h) => `${h}:00`).join(", ")}`)
-  } else {
-    desc.unshift(`At ${hours.map((h) => `${String(h).padStart(2, "0")}:${String(minutes[0] ?? 0).padStart(2, "0")}`).join(", ")}`)
-  }
-
-  return desc.join(" ")
-}
-
 export function CronParser() {
   const [cron, setCron] = useState("0 9 * * 1")
 
-  let description = ""
-  let error = ""
-  try {
-    description = describeCron(cron)
-  } catch (e) {
-    error = e instanceof Error ? e.message : "Invalid cron"
-  }
+  const description = useMemo(() => {
+    try {
+      return cronstrue.toString(cron)
+    } catch {
+      return ""
+    }
+  }, [cron])
+
+  const error = useMemo(() => {
+    if (!cron.trim()) return ""
+    try {
+CronExpressionParser.parse(cron)
+      return ""
+    } catch (e) {
+      return e instanceof Error ? e.message : "Invalid cron expression"
+    }
+  }, [cron])
 
   return (
     <div className="flex h-full flex-col">
@@ -137,7 +87,7 @@ export function CronParser() {
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-foreground">Next 5 Occurrences</label>
-            <NextOccurrences cron={cron} />
+            <NextOccurrences cron={cron} error={error} />
           </div>
         </div>
       </div>
@@ -145,41 +95,23 @@ export function CronParser() {
   )
 }
 
-function NextOccurrences({ cron }: { cron: string }) {
+function NextOccurrences({ cron, error }: { cron: string; error: string }) {
   const times = useMemo(() => {
+    if (error || !cron.trim()) return []
     try {
-      const parts = cron.trim().split(/\s+/)
-      if (parts.length !== 5) return []
-      const now = new Date()
+      const interval = CronExpressionParser.parse(cron)
       const results: Date[] = []
-      const current = new Date(now.getTime() + 60000)
-      current.setSeconds(0, 0)
-
-      const minutes = parseCronField(parts[0], 0, 59)
-      const hours = parseCronField(parts[1], 0, 23)
-      const doms = parseCronField(parts[2], 1, 31)
-      const months = parseCronField(parts[3], 1, 12)
-      const dows = parseCronField(parts[4], 0, 6)
-
-      const maxIter = 525600
-      for (let i = 0; i < maxIter && results.length < 5; i++) {
-        const d = new Date(current.getTime() + i * 60000)
-        if (
-          minutes.includes(d.getMinutes()) &&
-          hours.includes(d.getHours()) &&
-          (parts[2] === "*" || doms.includes(d.getDate())) &&
-          (parts[3] === "*" || months.includes(d.getMonth() + 1)) &&
-          (parts[4] === "*" || dows.includes(d.getDay()))
-        ) {
-          results.push(new Date(d))
-        }
+      for (let i = 0; i < 5; i++) {
+        const next = interval.next()
+        if (next) results.push(next.toDate())
       }
       return results
     } catch {
       return []
     }
-  }, [cron])
+  }, [cron, error])
 
+  if (error) return <span className="text-xs text-muted-foreground">Fix errors to see upcoming occurrences</span>
   if (times.length === 0) return <span className="text-xs text-muted-foreground">No upcoming occurrences found</span>
 
   return (

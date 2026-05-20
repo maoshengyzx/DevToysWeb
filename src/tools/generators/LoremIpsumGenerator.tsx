@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/shared"
 import { Select } from "@/components/ui/shared"
 import { Copy, Check, RefreshCw } from "lucide-react"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 
 const LOREM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
@@ -10,7 +11,7 @@ export function LoremIpsumGenerator() {
   const [output, setOutput] = useState(LOREM)
   const [count, setCount] = useState(1)
   const [type, setType] = useState<"paragraphs" | "sentences" | "words">("paragraphs")
-  const [copied, setCopied] = useState(false)
+  const [copied, handleCopy] = useCopyToClipboard()
 
   const sentences = LOREM.split(". ").filter(Boolean)
   const words = LOREM.split(" ")
@@ -29,14 +30,7 @@ export function LoremIpsumGenerator() {
         break
     }
     setOutput(result)
-    setCopied(false)
   }
-
-  const handleCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(output)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }, [output])
 
   return (
     <div className="flex h-full flex-col">
@@ -69,7 +63,7 @@ export function LoremIpsumGenerator() {
             <RefreshCw className="h-3.5 w-3.5" />
             Generate
           </Button>
-          <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleCopy}>
+          <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? "Copied!" : "Copy"}
           </Button>

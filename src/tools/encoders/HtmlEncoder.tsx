@@ -1,21 +1,12 @@
 import { EncoderDecoder } from "@/tools/EncoderDecoderLayout"
-
-const htmlEntities: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-}
+import { encode as heEncode, decode as heDecode } from "he"
 
 function encodeHtml(input: string): string {
-  return input.replace(/[&<>"']/g, (c) => htmlEntities[c] ?? c)
+  return heEncode(input, { useNamedReferences: true })
 }
 
 function decodeHtml(input: string): string {
-  const el = document.createElement("textarea")
-  el.innerHTML = input
-  return el.value
+  return heDecode(input, { strict: false })
 }
 
 export function HtmlEncoder() {

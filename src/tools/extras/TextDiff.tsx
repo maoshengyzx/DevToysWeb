@@ -1,37 +1,17 @@
 import { useState, useMemo } from "react"
 import { Textarea } from "@/components/ui/shared"
+import { diffLines } from "diff"
 
 export function TextDiff() {
   const [left, setLeft] = useState("")
   const [right, setRight] = useState("")
 
-  const diff = useMemo(() => {
-    const leftLines = left.split("\n")
-    const rightLines = right.split("\n")
-    const result: { type: "same" | "added" | "removed"; left?: string; right?: string; line: number }[] = []
-
-    let li = 0
-    let ri = 0
-    while (li < leftLines.length || ri < rightLines.length) {
-      if (li < leftLines.length && ri < rightLines.length) {
-        if (leftLines[li] === rightLines[ri]) {
-          result.push({ type: "same", left: leftLines[li], right: rightLines[ri], line: li + 1 })
-          li++; ri++
-        } else {
-          result.push({ type: "removed", left: leftLines[li], line: li + 1 })
-          result.push({ type: "added", right: rightLines[ri], line: ri + 1 })
-          li++; ri++
-        }
-      } else if (li < leftLines.length) {
-        result.push({ type: "removed", left: leftLines[li], line: li + 1 })
-        li++
-      } else {
-        result.push({ type: "added", right: rightLines[ri], line: ri + 1 })
-        ri++
-      }
-    }
-    return result
+  const changes = useMemo(() => {
+    if (!left && !right) return []
+    return diffLines(left, right)
   }, [left, right])
+
+  let lineNum = 0
 
   return (
     <div className="flex h-full flex-col">
@@ -63,22 +43,35 @@ export function TextDiff() {
               <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-green-500/20 border border-green-500/40" /> Added</span>
             </div>
             <div className="overflow-auto rounded-md border border-border font-mono text-xs">
-              {diff.map((d, i) => (
-                <div
-                  key={i}
-                  className={`px-3 py-0.5 ${
-                    d.type === "removed"
-                      ? "bg-red-500/10 text-red-400"
-                      : d.type === "added"
-                      ? "bg-green-500/10 text-green-400"
-                      : "text-foreground"
-                  }`}
-                >
-                  <span className="inline-block w-8 text-right mr-2 text-muted-foreground select-none">{d.line}</span>
-                  <span className="mr-1 select-none">{d.type === "removed" ? "-" : d.type === "added" ? "+" : " "}</span>
-                  {d.left ?? d.right ?? ""}
-                </div>
-              ))}
+              {changes.map((change, i) => {
+                const lines = change.value.split("\n")
+                if (change.value.endsWith("\n") && lines.length > 1) {
+                  lines.pop()
+                }
+                return lines.map((line, j) => {
+                  if (!change.removed) lineNum++
+                  return (
+                    <div
+                      key={`${i}-${j}`}
+                      className={`px-3 py-0.5 ${
+                        change.removed
+                          ? "bg-red-500/10 text-red-400"
+                          : change.added
+                          ? "bg-green-500/10 text-green-400"
+                          : "text-foreground"
+                      }`}
+                    >
+                      <span className="inline-block w-8 text-right mr-2 text-muted-foreground select-none">
+                        {change.removed ? "" : lineNum}
+                      </span>
+                      <span className="mr-1 select-none">
+                        {change.removed ? "-" : change.added ? "+" : " "}
+                      </span>
+                      {line}
+                    </div>
+                  )
+                })
+              })}
             </div>
           </div>
         )}

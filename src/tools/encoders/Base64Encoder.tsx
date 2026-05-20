@@ -5,7 +5,9 @@ export function Base64Encoder() {
     <EncoderDecoder
       encode={(s) => {
         const bytes = new TextEncoder().encode(s)
-        return btoa(String.fromCharCode(...bytes))
+        let binary = ""
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+        return btoa(binary)
       }}
       decode={(s) => {
         const bytes = Uint8Array.from(atob(s), (c) => c.charCodeAt(0))

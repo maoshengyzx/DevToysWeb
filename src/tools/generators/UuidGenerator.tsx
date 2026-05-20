@@ -1,12 +1,13 @@
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, RefreshCw } from "lucide-react"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 
 export function UuidGenerator() {
   const [uuids, setUuids] = useState<string[]>([crypto.randomUUID()])
   const [count, setCount] = useState(1)
-  const [copied, setCopied] = useState(false)
   const [uppercase, setUppercase] = useState(false)
+  const [copied, handleCopy] = useCopyToClipboard()
 
   const generate = () => {
     const newUuids = Array.from({ length: count }, () => {
@@ -14,14 +15,7 @@ export function UuidGenerator() {
       return uppercase ? id.toUpperCase() : id
     })
     setUuids(newUuids)
-    setCopied(false)
   }
-
-  const handleCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(uuids.join("\n"))
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }, [uuids])
 
   return (
     <div className="flex h-full flex-col">
@@ -53,7 +47,7 @@ export function UuidGenerator() {
             <RefreshCw className="h-3.5 w-3.5" />
             Generate
           </Button>
-          <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleCopy}>
+          <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(uuids.join("\n"))}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? "Copied!" : "Copy All"}
           </Button>

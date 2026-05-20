@@ -1,31 +1,12 @@
 import { Formatter } from "@/tools/FormatterLayout"
+import xmlFormatter from "xml-formatter"
 
 function formatXml(xml: string, indent: number = 2): string {
-  const PADDING = " ".repeat(indent)
-  let formatted = ""
-  let depth = 0
-  const reg = /(<[^>]+>)/g
-  const tags = xml.match(reg)
-  if (!tags) return xml
-
-  tags.forEach((tag) => {
-    if (tag.match(/^<\w[^>]*[^/]>.*?$/)) {
-      if (!tag.match(/^<\w[^>]*[^/]>.*?<\//)) {
-        formatted += PADDING.repeat(depth) + tag + "\n"
-        depth++
-      } else {
-        formatted += PADDING.repeat(depth) + tag + "\n"
-      }
-    } else if (tag.match(/^<\/\w/)) {
-      depth--
-      formatted += PADDING.repeat(Math.max(0, depth)) + tag + "\n"
-    } else if (tag.match(/^<\w[^>]*\/>/)) {
-      formatted += PADDING.repeat(depth) + tag + "\n"
-    } else {
-      formatted += PADDING.repeat(depth) + tag + "\n"
-    }
+  return xmlFormatter(xml, {
+    indentation: " ".repeat(indent),
+    collapseContent: true,
+    lineSeparator: "\n",
   })
-  return formatted.trim()
 }
 
 function minifyXml(xml: string): string {
