@@ -96,24 +96,24 @@ export function HttpStatusCodeLookup() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6">
-        <div className="flex flex-col gap-4 max-w-lg mx-auto">
+        <div className="max-w-4xl mx-auto">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by code or description..."
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mb-4"
           />
-          <div className="space-y-1">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {results.map(({ code, desc }) => (
               <div key={code} className="flex items-center gap-3 rounded-md border border-border px-3 py-2">
                 <span className={`text-sm font-mono font-bold ${getCategoryColor(code)}`}>{code}</span>
-                <span className="text-sm text-foreground">{desc}</span>
-                <span className="ml-auto text-xs text-muted-foreground">{getCategory(code)}</span>
+                <span className="flex-1 text-sm text-foreground truncate">{desc}</span>
+                <span className="text-xs text-muted-foreground shrink-0">{getCategory(code)}</span>
               </div>
             ))}
             {results.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No matching status codes found</p>
+              <p className="text-sm text-muted-foreground text-center py-4 col-span-full">No matching status codes found</p>
             )}
           </div>
         </div>

@@ -182,6 +182,7 @@ function App() {
     }
     return saved
   })
+  const [recentCollapsed, setRecentCollapsed] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => {
@@ -316,28 +317,31 @@ function App() {
 
               {recentTools.length > 0 && !isSearching && !sidebarCollapsed && (
                 <SidebarGroup>
-                  <SidebarGroupLabel>
+                  <SidebarGroupLabel className="cursor-pointer" onClick={() => setRecentCollapsed((c) => !c)}>
                     <Clock className="h-4 w-4" />
                     <span className="flex-1">Recent</span>
+                    <ChevronRight className={`h-3 w-3 shrink-0 text-muted-foreground/50 transition-transform duration-200 ${recentCollapsed ? "" : "rotate-90"}`} />
                   </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {recentTools.map((tool) => {
-                        const Icon = tool.icon
-                        return (
-                          <SidebarMenuItem key={tool.id}>
-                            <SidebarMenuButton
-                              isActive={activeToolId === tool.id}
-                              onClick={() => handleSelectTool(tool.id)}
-                            >
-                              <Icon className="h-3.5 w-3.5" />
-                              <span className="text-xs">{tool.label}</span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        )
-                      })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
+                  {!recentCollapsed && (
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {recentTools.map((tool) => {
+                          const Icon = tool.icon
+                          return (
+                            <SidebarMenuItem key={tool.id}>
+                              <SidebarMenuButton
+                                isActive={activeToolId === tool.id}
+                                onClick={() => handleSelectTool(tool.id)}
+                              >
+                                <Icon className="h-3.5 w-3.5" />
+                                <span className="text-xs">{tool.label}</span>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          )
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  )}
                   <SidebarSeparator />
                 </SidebarGroup>
               )}

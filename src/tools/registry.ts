@@ -8,13 +8,13 @@ import {
   Ruler, Timer, ListFilter, Calculator,
   Image, QrCode, FileImage, PenTool, ImageDown,
   Gauge, FileSearch, SearchCode, Bot,
-  Users, Radio, Shuffle, Tv, Coins,
 } from "lucide-react"
 
 import { NumberBaseConverter } from "./converters/NumberBaseConverter"
 import { JsonYamlConverter } from "./converters/JsonYamlConverter"
 import { JsonToTypeScript } from "./converters/JsonToTypeScript"
 import { UnitConverter } from "./converters/UnitConverter"
+import { SqlToEntity } from "./converters/SqlToEntity"
 import { HtmlEncoder } from "./encoders/HtmlEncoder"
 import { UrlEncoder } from "./encoders/UrlEncoder"
 import { Base64Encoder } from "./encoders/Base64Encoder"
@@ -43,15 +43,10 @@ import { ImageCompressor } from "./media/ImageCompressor"
 import { IcoGenerator } from "./media/IcoGenerator"
 import { SvgConverter } from "./media/SvgConverter"
 import { ImageEditor } from "./media/ImageEditor"
-import { WebsiteSpeedTest } from "./web/WebsiteSpeedTest"
-import { RobotsTxtGenerator } from "./web/RobotsTxtGenerator"
-import { SeoMetaAnalyzer } from "./web/SeoMetaAnalyzer"
 import { DomainWhoisLookup } from "./web/DomainWhoisLookup"
-import { KinshipCalculator } from "./extras/KinshipCalculator"
-import { MorseCodeTranslator } from "./extras/MorseCodeTranslator"
-import { RandomGenerator } from "./extras/RandomGenerator"
-import { DanmakuGenerator } from "./extras/DanmakuGenerator"
-import { NumberToChineseAmount } from "./extras/NumberToChineseAmount"
+import { WebsiteSpeedTest } from "./web/WebsiteSpeedTest"
+import { SeoMetaAnalyzer } from "./web/SeoMetaAnalyzer"
+import { RobotsTxtGenerator } from "./web/RobotsTxtGenerator"
 
 export interface ToolDefinition {
   id: string
@@ -76,6 +71,7 @@ export const toolCategories: ToolCategory[] = [
       { id: "json-yaml", label: "JSON ↔ YAML", description: "Convert between JSON and YAML formats", icon: ArrowLeftRight, component: JsonYamlConverter },
       { id: "json-to-typescript", label: "JSON → TypeScript", description: "Convert JSON to TypeScript interfaces", icon: Braces, component: JsonToTypeScript },
       { id: "unit-converter", label: "Unit Converter", description: "Convert length, weight, temperature, area, volume, speed, data units", icon: Ruler, component: UnitConverter },
+      { id: "sql-to-entity", label: "SQL → Entity Class", description: "Convert SQL CREATE TABLE to Java, Kotlin, TypeScript, C#, Python, Go entity classes", icon: Code2, component: SqlToEntity },
     ],
   },
   {
@@ -156,11 +152,6 @@ export const toolCategories: ToolCategory[] = [
       { id: "cron-parser", label: "Cron Parser", description: "Parse and explain cron expressions", icon: Clock, component: CronParser },
       { id: "color-converter", label: "Color Converter", description: "Convert colors between HEX, RGB, HSL", icon: Pipette, component: ColorConverter },
       { id: "timestamp-converter", label: "Timestamp Converter", description: "Convert between Unix timestamp and human-readable date/time", icon: Timer, component: TimestampConverter },
-      { id: "kinship-calculator", label: "Kinship Calculator", description: "Calculate Chinese kinship titles from relationship chains", icon: Users, component: KinshipCalculator },
-      { id: "morse-code", label: "Morse Code Translator", description: "Convert between text and Morse code", icon: Radio, component: MorseCodeTranslator },
-      { id: "random-generator", label: "Random Generator", description: "Generate random numbers, roll dice, and spin wheels", icon: Shuffle, component: RandomGenerator },
-      { id: "danmaku", label: "Danmaku Generator", description: "Create scrolling text barrages on screen", icon: Tv, component: DanmakuGenerator },
-      { id: "number-to-chinese", label: "Number to Chinese Amount", description: "Convert numbers to Chinese uppercase monetary amounts", icon: Coins, component: NumberToChineseAmount },
     ],
   },
 ]

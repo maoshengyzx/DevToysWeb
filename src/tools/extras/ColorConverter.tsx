@@ -108,48 +108,54 @@ export function ColorConverter() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6">
-        <div className="space-y-6 max-w-md">
-          <div className="flex flex-col gap-4">
-            <div
-              className="h-24 rounded-lg border border-border"
-              style={{ backgroundColor: previewColor }}
-            />
-            <input
-              type="color"
-              value={previewColor}
-              onChange={(e) => handleHexChange(e.target.value)}
-              className="h-9 w-full cursor-pointer rounded-md border border-input"
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">HEX</label>
-              <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(hex, "hex")}>
-                {copiedKey === "hex" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              </Button>
+        <div className="max-w-3xl mx-auto">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
+                <div
+                  className="h-32 rounded-lg border border-border"
+                  style={{ backgroundColor: previewColor }}
+                />
+                <input
+                  type="color"
+                  value={previewColor}
+                  onChange={(e) => handleHexChange(e.target.value)}
+                  className="h-9 w-full cursor-pointer rounded-md border border-input"
+                />
+              </div>
             </div>
-            <Input value={hex} onChange={(e) => handleHexChange(e.target.value)} placeholder="#6366f1" />
-          </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">RGB</label>
-              <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(`rgb(${rgb})`, "rgb")}>
-                {copiedKey === "rgb" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              </Button>
-            </div>
-            <Input value={rgb} onChange={(e) => handleRgbChange(e.target.value)} placeholder="99, 102, 241" />
-          </div>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">HEX</label>
+                  <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(hex, "hex")}>
+                    {copiedKey === "hex" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </div>
+                <Input value={hex} onChange={(e) => handleHexChange(e.target.value)} placeholder="#6366f1" />
+              </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">HSL</label>
-              <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(`hsl(${hsl})`, "hsl")}>
-                {copiedKey === "hsl" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              </Button>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">RGB</label>
+                  <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(`rgb(${rgb})`, "rgb")}>
+                    {copiedKey === "rgb" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </div>
+                <Input value={rgb} onChange={(e) => handleRgbChange(e.target.value)} placeholder="99, 102, 241" />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">HSL</label>
+                  <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(`hsl(${hsl})`, "hsl")}>
+                    {copiedKey === "hsl" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </div>
+                <Input value={hsl} onChange={(e) => handleHslChange(e.target.value)} placeholder="239, 84%, 67%" />
+              </div>
             </div>
-            <Input value={hsl} onChange={(e) => handleHslChange(e.target.value)} placeholder="239, 84%, 67%" />
           </div>
         </div>
       </div>

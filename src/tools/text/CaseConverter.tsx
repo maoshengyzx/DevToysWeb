@@ -19,26 +19,34 @@ export function CaseConverter() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6">
-        <div className="flex flex-col gap-2 mb-6">
-          <label className="text-sm font-medium text-foreground">Input</label>
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type or paste text to convert..."
-          />
-        </div>
-        {input && (
-          <div className="flex flex-col gap-3">
-            {cases.map((c) => (
-              <div key={c.label} className="flex items-start gap-3">
-                <span className="w-32 shrink-0 text-sm font-medium text-muted-foreground pt-2">{c.label}</span>
-                <code className="flex-1 rounded-md border border-border bg-muted px-3 py-2 text-sm font-mono text-foreground break-all select-all">
-                  {c.fn(input)}
-                </code>
-              </div>
-            ))}
+        <div className="max-w-4xl mx-auto">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-foreground">Input</label>
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type or paste text to convert..."
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              {input ? (
+                cases.map((c) => (
+                  <div key={c.label} className="flex items-start gap-3">
+                    <span className="w-32 shrink-0 text-sm font-medium text-muted-foreground pt-2">{c.label}</span>
+                    <code className="flex-1 rounded-md border border-border bg-muted px-3 py-2 text-sm font-mono text-foreground break-all select-all">
+                      {c.fn(input)}
+                    </code>
+                  </div>
+                ))
+              ) : (
+                <div className="flex items-center justify-center min-h-[200px] rounded-md border border-dashed border-border text-sm text-muted-foreground">
+                  Type text on the left to see conversions
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

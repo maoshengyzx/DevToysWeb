@@ -66,55 +66,66 @@ export function PasswordGenerator() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6">
-        <div className="space-y-4 max-w-md">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">
-              Length: {length}
-            </label>
-            <input
-              type="range"
-              min={4}
-              max={64}
-              value={length}
-              onChange={(e) => setLength(Number(e.target.value))}
-              className="w-full cursor-pointer accent-primary"
-            />
-          </div>
-          <div className="space-y-2">
-            {[
-              { label: "Lowercase (a-z)", value: useLowercase, setter: setUseLowercase },
-              { label: "Uppercase (A-Z)", value: useUppercase, setter: setUseUppercase },
-              { label: "Numbers (0-9)", value: useNumbers, setter: setUseNumbers },
-              { label: "Symbols (!@#$...)", value: useSymbols, setter: setUseSymbols },
-            ].map((opt) => (
-              <label key={opt.label} className="flex items-center gap-2 cursor-pointer">
+        <div className="max-w-3xl mx-auto">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-foreground">
+                  Length: {length}
+                </label>
                 <input
-                  type="checkbox"
-                  checked={opt.value}
-                  onChange={(e) => opt.setter(e.target.checked)}
-                  className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
+                  type="range"
+                  min={4}
+                  max={64}
+                  value={length}
+                  onChange={(e) => setLength(Number(e.target.value))}
+                  className="w-full cursor-pointer accent-primary"
                 />
-                <span className="text-sm text-foreground">{opt.label}</span>
-              </label>
-            ))}
-          </div>
-          {password && (
-            <div className="rounded-md border border-border bg-muted px-4 py-3 font-mono text-sm break-all">
-              {password}
-              {strength.label && (
-                <span className={`ml-2 text-xs ${strength.color}`}>{strength.label}</span>
+              </div>
+              <div className="space-y-2">
+                {[
+                  { label: "Lowercase (a-z)", value: useLowercase, setter: setUseLowercase },
+                  { label: "Uppercase (A-Z)", value: useUppercase, setter: setUseUppercase },
+                  { label: "Numbers (0-9)", value: useNumbers, setter: setUseNumbers },
+                  { label: "Symbols (!@#$...)", value: useSymbols, setter: setUseSymbols },
+                ].map((opt) => (
+                  <label key={opt.label} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={opt.value}
+                      onChange={(e) => opt.setter(e.target.checked)}
+                      className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
+                    />
+                    <span className="text-sm text-foreground">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button className="gap-1.5 cursor-pointer" onClick={generate}>
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Generate
+                </Button>
+                <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(password)} disabled={!password}>
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? "Copied!" : "Copy"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {password ? (
+                <div className="rounded-md border border-border bg-muted px-4 py-3 font-mono text-sm break-all min-h-[80px]">
+                  {password}
+                  {strength.label && (
+                    <span className={`ml-2 text-xs ${strength.color}`}>{strength.label}</span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center min-h-[80px] rounded-md border border-dashed border-border text-sm text-muted-foreground">
+                  Click Generate to create a password
+                </div>
               )}
             </div>
-          )}
-          <div className="flex gap-2">
-            <Button className="gap-1.5 cursor-pointer" onClick={generate}>
-              <RefreshCw className="h-3.5 w-3.5" />
-              Generate
-            </Button>
-            <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(password)} disabled={!password}>
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "Copied!" : "Copy"}
-            </Button>
           </div>
         </div>
       </div>
