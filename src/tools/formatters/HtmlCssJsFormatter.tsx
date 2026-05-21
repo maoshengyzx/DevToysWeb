@@ -5,6 +5,9 @@ import { Copy, Check, Trash2 } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { html as htmlBeautify, css as cssBeautify, js as jsBeautify } from "js-beautify"
+import { minify as terserMinify } from "terser"
+import CleanCSS from "clean-css"
+import { minify as htmlMinify } from "html-minifier-terser"
 
 type Language = "html" | "css" | "js"
 
@@ -23,11 +26,14 @@ function formatCode(input: string, lang: Language, indent: number): string {
   }
 }
 
-function minifyCode(input: string, lang: Language): string {
+async function minifyCode(input: string, lang: Language): Promise<string> {
   switch (lang) {
-    case "html": return input.replace(/>\s+</g, "><").replace(/\s+/g, " ").trim()
-    case "css": return input.replace(/\/\*.*?\*\//g, "").replace(/\s*([{}:;,])\s*/g, "$1").replace(/;\}/g, "}").trim()
-    case "js": return input.replace(/\s+/g, " ").replace(/\s*([{}();,=+\-*/<>&|!])\s*/g, "$1").trim()
+    case "html": return htmlMinify(input, { collapseWhitespace: true, removeComments: true, minifyCSS: true, minifyJS: true })
+    case "css": return new CleanCSS({ level: 2 }).minify(input).styles
+    case "js": {
+      const result = await terserMinify(input, { compress: true, mangle: false })
+      return result.code ?? input
+    }
   }
 }
 
@@ -48,13 +54,13 @@ export function HtmlCssJsFormatter() {
   const [indent, setIndent] = useState(2)
   const [copied, handleCopy] = useCopyToClipboard()
 
-  const handleProcess = () => {
+  const handleProcess = async () => {
     if (!input.trim()) return
     try {
       let result = ""
       switch (mode) {
         case "format": result = formatCode(input, lang, indent); break
-        case "minify": result = minifyCode(input, lang); break
+        case "minify": result = await minifyCode(input, lang); break
         case "escape": result = escapeCode(input); break
         case "unescape": result = unescapeCode(input); break
       }

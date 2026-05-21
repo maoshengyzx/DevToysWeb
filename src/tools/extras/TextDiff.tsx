@@ -1,6 +1,32 @@
 import { useState, useMemo } from "react"
 import { Textarea } from "@/components/ui/shared"
-import { diffLines } from "diff"
+import { diffLines, type Change } from "diff"
+
+interface DiffLine {
+  type: "add" | "remove" | "normal"
+  content: string
+  lineNum: number | ""
+}
+
+function computeDiffLines(changes: Change[]): DiffLine[] {
+  const lines: DiffLine[] = []
+  let lineNum = 0
+  for (const change of changes) {
+    const splitLines = change.value.split("\n")
+    if (change.value.endsWith("\n") && splitLines.length > 1) {
+      splitLines.pop()
+    }
+    for (const line of splitLines) {
+      if (!change.removed) lineNum++
+      lines.push({
+        type: change.removed ? "remove" : change.added ? "add" : "normal",
+        content: line,
+        lineNum: change.removed ? "" : lineNum,
+      })
+    }
+  }
+  return lines
+}
 
 export function TextDiff() {
   const [left, setLeft] = useState("")
@@ -11,7 +37,7 @@ export function TextDiff() {
     return diffLines(left, right)
   }, [left, right])
 
-  let lineNum = 0
+  const diffLines_result = useMemo(() => computeDiffLines(changes), [changes])
 
   return (
     <div className="flex h-full flex-col">
@@ -43,35 +69,26 @@ export function TextDiff() {
               <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-green-500/20 border border-green-500/40" /> Added</span>
             </div>
             <div className="overflow-auto rounded-md border border-border font-mono text-xs">
-              {changes.map((change, i) => {
-                const lines = change.value.split("\n")
-                if (change.value.endsWith("\n") && lines.length > 1) {
-                  lines.pop()
-                }
-                return lines.map((line, j) => {
-                  if (!change.removed) lineNum++
-                  return (
-                    <div
-                      key={`${i}-${j}`}
-                      className={`px-3 py-0.5 ${
-                        change.removed
-                          ? "bg-red-500/10 text-red-400"
-                          : change.added
-                          ? "bg-green-500/10 text-green-400"
-                          : "text-foreground"
-                      }`}
-                    >
-                      <span className="inline-block w-8 text-right mr-2 text-muted-foreground select-none">
-                        {change.removed ? "" : lineNum}
-                      </span>
-                      <span className="mr-1 select-none">
-                        {change.removed ? "-" : change.added ? "+" : " "}
-                      </span>
-                      {line}
-                    </div>
-                  )
-                })
-              })}
+              {diffLines_result.map((dl, i) => (
+                <div
+                  key={i}
+                  className={`px-3 py-0.5 ${
+                    dl.type === "remove"
+                      ? "bg-red-500/10 text-red-400"
+                      : dl.type === "add"
+                      ? "bg-green-500/10 text-green-400"
+                      : "text-foreground"
+                  }`}
+                >
+                  <span className="inline-block w-8 text-right mr-2 text-muted-foreground select-none">
+                    {dl.lineNum}
+                  </span>
+                  <span className="mr-1 select-none">
+                    {dl.type === "remove" ? "-" : dl.type === "add" ? "+" : " "}
+                  </span>
+                  {dl.content}
+                </div>
+              ))}
             </div>
           </div>
         )}

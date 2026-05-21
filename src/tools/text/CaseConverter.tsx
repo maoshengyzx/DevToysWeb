@@ -1,14 +1,15 @@
 import { useState } from "react"
 import { Textarea } from "@/components/ui/shared"
+import { camelCase, pascalCase, snakeCase, kebabCase, constantCase, sentenceCase, capitalCase } from "change-case"
 
 const cases = [
-  { label: "camelCase", fn: (s: string) => s.replace(/(?:^\w|[A-Z]|\b\w)/g, (c, i) => i === 0 ? c.toLowerCase() : c.toUpperCase()).replace(/[-_\s]+/g, "") },
-  { label: "PascalCase", fn: (s: string) => s.replace(/(?:^|[-_\s])(\w)/g, (_, c) => c.toUpperCase()) },
-  { label: "snake_case", fn: (s: string) => s.replace(/([a-z])([A-Z])/g, "$1_$2").replace(/[-\s]+/g, "_").toLowerCase() },
-  { label: "kebab-case", fn: (s: string) => s.replace(/([a-z])([A-Z])/g, "$1-$2").replace(/[_\s]+/g, "-").toLowerCase() },
-  { label: "CONSTANT_CASE", fn: (s: string) => s.replace(/([a-z])([A-Z])/g, "$1_$2").replace(/[-\s]+/g, "_").toUpperCase() },
-  { label: "Sentence case", fn: (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() },
-  { label: "Title Case", fn: (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase()) },
+  { label: "camelCase", fn: camelCase },
+  { label: "PascalCase", fn: pascalCase },
+  { label: "snake_case", fn: snakeCase },
+  { label: "kebab-case", fn: kebabCase },
+  { label: "CONSTANT_CASE", fn: constantCase },
+  { label: "Sentence case", fn: sentenceCase },
+  { label: "Title Case", fn: (s: string) => capitalCase(s) },
   { label: "Lower case", fn: (s: string) => s.toLowerCase() },
   { label: "Upper case", fn: (s: string) => s.toUpperCase() },
 ]

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Textarea, Select } from "@/components/ui/shared"
 import { ErrorBanner } from "@/components/ui/error-banner"
 
@@ -13,30 +13,17 @@ export function NumberBaseConverter() {
   const [input, setInput] = useState("")
   const [fromBase, setFromBase] = useState(10)
   const [toBase, setToBase] = useState(16)
-  const [error, setError] = useState("")
 
-  let output = ""
-  if (input.trim()) {
+  const { output, error } = useMemo(() => {
+    if (!input.trim()) return { output: "", error: "" }
     try {
       const num = parseInt(input.trim(), fromBase)
       if (isNaN(num)) throw new Error("Invalid number for the selected base")
-      output = num.toString(toBase).toUpperCase()
+      return { output: num.toString(toBase).toUpperCase(), error: "" }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Conversion error")
+      return { output: "", error: e instanceof Error ? e.message : "Conversion error" }
     }
-  }
-
-  const handleInputChange = (value: string) => {
-    setInput(value)
-    setError("")
-    if (!value.trim()) return
-    try {
-      const num = parseInt(value.trim(), fromBase)
-      if (isNaN(num)) throw new Error("Invalid number for the selected base")
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid input")
-    }
-  }
+  }, [input, fromBase, toBase])
 
   return (
     <div className="flex h-full flex-col">
@@ -57,14 +44,14 @@ export function NumberBaseConverter() {
             <label className="text-sm font-medium text-foreground">Input</label>
             <Textarea
               value={input}
-              onChange={(e) => handleInputChange(e.target.value)}
+              onChange={(e) => setInput(e.target.value)}
               placeholder="Enter a number..."
             />
           </div>
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-foreground">Output</label>
             <Textarea
-              value={error ? "" : output}
+              value={output}
               readOnly
               className="bg-muted"
               placeholder="Converted number will appear here..."

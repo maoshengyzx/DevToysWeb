@@ -2,32 +2,32 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Copy, Check } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import dayjs from "dayjs"
+import utc from "dayjs/plugin/utc"
+import relativeTime from "dayjs/plugin/relativeTime"
+
+dayjs.extend(utc)
+dayjs.extend(relativeTime)
 
 function getNow(): number {
   return Math.floor(Date.now() / 1000)
-}
-
-function tsToDateStr(ts: number): string {
-  const d = new Date(ts * 1000)
-  return d.toISOString().replace("T", " ").replace(/\.\d{3}Z$/, " UTC")
 }
 
 const initialTs = getNow()
 
 export function TimestampConverter() {
   const [timestamp, setTimestamp] = useState(String(initialTs))
-  const [dateStr, setDateStr] = useState(tsToDateStr(initialTs))
-  const [now] = useState(initialTs)
+  const [dateStr, setDateStr] = useState(dayjs.unix(initialTs).format("YYYY-MM-DD HH:mm:ss"))
   const [copied, handleCopy] = useCopyToClipboard()
 
   const tsNumber = parseInt(timestamp, 10)
-  const tsDate = !isNaN(tsNumber) && timestamp.trim() ? new Date(tsNumber * 1000) : null
+  const tsDate = !isNaN(tsNumber) && timestamp.trim() ? dayjs.unix(tsNumber) : null
 
   const handleTimestampChange = (val: string) => {
     setTimestamp(val)
     const num = parseInt(val, 10)
     if (!isNaN(num) && val.trim()) {
-      setDateStr(tsToDateStr(num))
+      setDateStr(dayjs.unix(num).format("YYYY-MM-DD HH:mm:ss"))
     } else {
       setDateStr("")
     }
@@ -35,23 +35,25 @@ export function TimestampConverter() {
 
   const handleDateChange = (val: string) => {
     setDateStr(val)
-    const d = new Date(val)
-    if (!isNaN(d.getTime())) {
-      setTimestamp(String(Math.floor(d.getTime() / 1000)))
+    const d = dayjs(val)
+    if (d.isValid()) {
+      setTimestamp(String(Math.floor(d.valueOf() / 1000)))
     }
   }
 
+  const startOfToday = Math.floor(dayjs().startOf("day").valueOf() / 1000)
+
   const presets = [
-    { label: "Now", ts: now },
-    { label: "1 hour ago", ts: now - 3600 },
-    { label: "1 day ago", ts: now - 86400 },
-    { label: "1 week ago", ts: now - 604800 },
-    { label: "Start of today", ts: now - (now % 86400) - 28800 },
+    { label: "Now", ts: getNow() },
+    { label: "1 hour ago", ts: getNow() - 3600 },
+    { label: "1 day ago", ts: getNow() - 86400 },
+    { label: "1 week ago", ts: getNow() - 604800 },
+    { label: "Start of today", ts: startOfToday },
   ]
 
   const handlePreset = (ts: number) => {
     setTimestamp(String(ts))
-    setDateStr(tsToDateStr(ts))
+    setDateStr(dayjs.unix(ts).format("YYYY-MM-DD HH:mm:ss"))
   }
 
   return (
@@ -109,15 +111,15 @@ export function TimestampConverter() {
             </div>
 
             <div className="flex flex-col gap-4">
-              {tsDate && !isNaN(tsDate.getTime()) ? (
+              {tsDate && tsDate.isValid() ? (
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-foreground">Converted Results</label>
                   <div className="space-y-1.5">
                     {[
-                      { label: "UTC", value: tsDate.toISOString() },
-                      { label: "Local", value: tsDate.toLocaleString() },
-                      { label: "ISO 8601", value: tsDate.toISOString() },
-                      { label: "Relative", value: getRelativeTime(tsDate) },
+                      { label: "UTC", value: tsDate.utc().format("YYYY-MM-DD HH:mm:ss [UTC]") },
+                      { label: "Local", value: tsDate.format("YYYY-MM-DD HH:mm:ss") },
+                      { label: "ISO 8601", value: tsDate.utc().format() },
+                      { label: "Relative", value: tsDate.fromNow() },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-2 rounded-md border border-border px-3 py-2">
                         <span className="w-20 shrink-0 text-xs text-muted-foreground">{item.label}</span>
@@ -137,18 +139,4 @@ export function TimestampConverter() {
       </div>
     </div>
   )
-}
-
-function getRelativeTime(date: Date): string {
-  const now = Date.now()
-  const diff = now - date.getTime()
-  const abs = Math.abs(diff)
-  const suffix = diff > 0 ? "ago" : "from now"
-
-  if (abs < 60000) return `${Math.floor(abs / 1000)} seconds ${suffix}`
-  if (abs < 3600000) return `${Math.floor(abs / 60000)} minutes ${suffix}`
-  if (abs < 86400000) return `${Math.floor(abs / 3600000)} hours ${suffix}`
-  if (abs < 2592000000) return `${Math.floor(abs / 86400000)} days ${suffix}`
-  if (abs < 31536000000) return `${Math.floor(abs / 2592000000)} months ${suffix}`
-  return `${Math.floor(abs / 31536000000)} years ${suffix}`
 }

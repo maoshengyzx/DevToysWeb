@@ -8,6 +8,17 @@ const UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const NUMBERS = "0123456789"
 const SYMBOLS = "!@#$%^&*()_+-=[]{}|;:,.<>?"
 
+function secureRandomIndex(max: number): number {
+  const limit = Math.floor(0x100000000 / max) * max
+  const arr = new Uint32Array(1)
+  let v: number
+  do {
+    crypto.getRandomValues(arr)
+    v = arr[0]
+  } while (v >= limit)
+  return v % max
+}
+
 function generatePassword(length: number, useLower: boolean, useUpper: boolean, useNum: boolean, useSym: boolean): string {
   let charset = ""
   const required: string[] = []
@@ -17,23 +28,20 @@ function generatePassword(length: number, useLower: boolean, useUpper: boolean, 
   if (useSym) { charset += SYMBOLS; required.push(SYMBOLS) }
   if (!charset) return ""
 
-  const array = new Uint32Array(length)
-  crypto.getRandomValues(array)
-  let result = ""
+  const chars: string[] = []
 
   for (let i = 0; i < required.length && i < length; i++) {
-    result += required[i][array[i] % required[i].length]
+    chars.push(required[i][secureRandomIndex(required[i].length)])
   }
   for (let i = required.length; i < length; i++) {
-    result += charset[array[i] % charset.length]
+    chars.push(charset[secureRandomIndex(charset.length)])
   }
 
-  const arr = result.split("")
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = array[i] % (i + 1)
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = secureRandomIndex(i + 1)
+    ;[chars[i], chars[j]] = [chars[j], chars[i]]
   }
-  return arr.join("")
+  return chars.join("")
 }
 
 export function PasswordGenerator() {

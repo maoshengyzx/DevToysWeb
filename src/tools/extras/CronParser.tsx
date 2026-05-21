@@ -105,10 +105,8 @@ function CronFieldSelect({
   onChange: (v: string) => void
 }) {
   const useCustom = !options.some((o) => o.value === value) && value !== "__custom__"
-  const [, setLocalInit] = useState(false)
   const handleSelect = (v: string) => {
     if (v === "__custom__") {
-      setLocalInit(true)
       onChange("")
     } else {
       onChange(v)
@@ -182,7 +180,7 @@ function CronGenerator({ onGenerate }: { onGenerate: (cron: string) => void }) {
   )
 }
 
-function CronResult({ cron }: { cron: string }) {
+function CronResult({ cron, onSetCron }: { cron: string; onSetCron: (c: string) => void }) {
   const [, copy] = useCopyToClipboard()
 
   const description = useMemo(() => {
@@ -274,6 +272,7 @@ function CronResult({ cron }: { cron: string }) {
               variant="outline"
               size="sm"
               className="cursor-pointer"
+              onClick={() => onSetCron(preset.cron)}
             >
               {preset.label}
             </Button>
@@ -332,7 +331,7 @@ export function CronParser() {
               )}
             </div>
             <div className="flex flex-col gap-4">
-              {tab === "parse" && <CronResult cron={cron} />}
+              {tab === "parse" && <CronResult cron={cron} onSetCron={setCron} />}
             </div>
           </div>
         </div>
