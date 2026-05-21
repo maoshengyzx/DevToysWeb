@@ -140,11 +140,11 @@ export function ImageCompressor() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-foreground">Max Width</label>
-              <input type="number" value={maxWidth} onChange={(e) => setMaxWidth(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+              <input type="text" inputMode="numeric" value={maxWidth} onChange={(e) => { const n = parseInt(e.target.value, 10); if (!isNaN(n)) setMaxWidth(n) }} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-foreground">Max Height</label>
-              <input type="number" value={maxHeight} onChange={(e) => setMaxHeight(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+              <input type="text" inputMode="numeric" value={maxHeight} onChange={(e) => { const n = parseInt(e.target.value, 10); if (!isNaN(n)) setMaxHeight(n) }} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
             </div>
           </div>
           {error && <ErrorBanner message={error} />}

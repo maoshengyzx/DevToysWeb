@@ -7,28 +7,10 @@ import {
   Sun,
   ChevronRight,
   Star,
-  PanelLeftClose,
-  PanelLeft,
-  X,
   LayoutGrid,
   Clock,
 } from "lucide-react"
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarSeparator,
-  SidebarFooter,
-} from "@/components/ui/sidebar"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { toolCategories, getToolById } from "@/tools/registry"
 import type { ToolDefinition } from "@/tools/registry"
 
@@ -183,8 +165,6 @@ function App() {
     return saved
   })
   const [recentCollapsed, setRecentCollapsed] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => {
     const isDark = getInitialDarkMode()
     if (isDark) document.documentElement.classList.add("dark")
@@ -193,7 +173,6 @@ function App() {
   })
 
   const handleSelectTool = (id: string) => {
-    setMobileMenuOpen(false)
     setRecent((prev) => {
       const next = [id, ...prev.filter((r) => r !== id)].slice(0, MAX_RECENT)
       saveList(RECENT_KEY, next)
@@ -249,234 +228,189 @@ function App() {
 
   return (
     <div className="flex h-screen">
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-sidebar-border bg-sidebar-background transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        } md:flex md:flex-col md:shrink-0 ${sidebarCollapsed ? "md:w-14" : "md:w-64"}`}
-      >
-        <SidebarProvider>
-          <Sidebar className={sidebarCollapsed ? "w-14" : "w-64"}>
-            <SidebarHeader>
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                  <Wrench className="h-4 w-4" />
-                </div>
-                {!sidebarCollapsed && (
-                  <span className="text-base font-semibold tracking-tight">
-                    DevToysWeb
-                  </span>
-                )}
+      <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background text-sidebar-foreground">
+        <div className="flex items-center gap-2 px-4 py-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Wrench className="h-4 w-4" />
+          </div>
+          <span className="text-base font-semibold tracking-tight">DevToysWeb</span>
+        </div>
+
+        <div className="px-4 pb-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search tools..."
+              className="pl-8"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+        <hr className="mx-2 my-2 border-sidebar-border/50" />
+
+        <div className="sidebar-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4">
+          {!isSearching && (
+            <ul className="flex w-full min-w-0 flex-col gap-0.5">
+              <li className="group/menu-item relative">
                 <button
-                  className="ml-auto md:hidden rounded-md p-1 text-muted-foreground hover:text-foreground cursor-pointer"
-                  onClick={() => setMobileMenuOpen(false)}
+                  data-active={!activeToolId || undefined}
+                  className={`flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm outline-none transition-colors duration-150 cursor-pointer ${
+                    !activeToolId
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium hover:bg-sidebar-primary/90"
+                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  }`}
+                  onClick={() => navigate("/")}
                 >
-                  <X className="h-4 w-4" />
+                  <LayoutGrid className="h-4 w-4 shrink-0" />
+                  <span className="flex-1 truncate">All Tools</span>
                 </button>
+              </li>
+            </ul>
+          )}
+          <hr className="mx-0 my-1 border-sidebar-border/50" />
+
+          {recentTools.length > 0 && !isSearching && (
+            <div className="flex flex-col gap-1">
+              <div
+                className="flex h-7 shrink-0 items-center gap-2.5 px-3 text-[13px] font-semibold tracking-normal text-muted-foreground/70 select-none cursor-pointer"
+                onClick={() => setRecentCollapsed((c) => !c)}
+              >
+                <Clock className="h-4 w-4" />
+                <span className="flex-1">Recent</span>
+                <ChevronRight className={`h-3 w-3 shrink-0 text-muted-foreground/50 transition-transform duration-200 ${recentCollapsed ? "" : "rotate-90"}`} />
               </div>
-            </SidebarHeader>
-
-            {!sidebarCollapsed && (
-              <>
-                <div className="px-4 pb-2">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="search"
-                      placeholder="Search tools..."
-                      className="pl-8"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                  </div>
+              {!recentCollapsed && (
+                <div className="ml-3 border-l border-sidebar-border pl-2 flex flex-col gap-0.5">
+                  <ul className="flex w-full min-w-0 flex-col gap-0.5">
+                    {recentTools.map((tool) => {
+                      const Icon = tool.icon
+                      return (
+                        <li key={tool.id} className="group/menu-item relative">
+                          <button
+                            className={`flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm outline-none transition-colors duration-150 cursor-pointer ${
+                              activeToolId === tool.id
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium hover:bg-sidebar-primary/90"
+                                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            }`}
+                            onClick={() => handleSelectTool(tool.id)}
+                          >
+                            <Icon className="h-3.5 w-3.5 shrink-0" />
+                            <span className="text-xs">{tool.label}</span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
                 </div>
-                <SidebarSeparator />
-              </>
-            )}
-
-            <SidebarContent>
-              {!isSearching && !sidebarCollapsed && (
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={!activeToolId}
-                      onClick={() => navigate("/")}
-                    >
-                      <LayoutGrid className="h-4 w-4" />
-                      <span className="flex-1">All Tools</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
               )}
-              <SidebarSeparator />
+              <hr className="mx-0 my-1 border-sidebar-border/50" />
+            </div>
+          )}
 
-              {recentTools.length > 0 && !isSearching && !sidebarCollapsed && (
-                <SidebarGroup>
-                  <SidebarGroupLabel className="cursor-pointer" onClick={() => setRecentCollapsed((c) => !c)}>
-                    <Clock className="h-4 w-4" />
-                    <span className="flex-1">Recent</span>
-                    <ChevronRight className={`h-3 w-3 shrink-0 text-muted-foreground/50 transition-transform duration-200 ${recentCollapsed ? "" : "rotate-90"}`} />
-                  </SidebarGroupLabel>
-                  {!recentCollapsed && (
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {recentTools.map((tool) => {
-                          const Icon = tool.icon
-                          return (
-                            <SidebarMenuItem key={tool.id}>
-                              <SidebarMenuButton
-                                isActive={activeToolId === tool.id}
-                                onClick={() => handleSelectTool(tool.id)}
-                              >
-                                <Icon className="h-3.5 w-3.5" />
-                                <span className="text-xs">{tool.label}</span>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          )
-                        })}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  )}
-                  <SidebarSeparator />
-                </SidebarGroup>
-              )}
+          {favoriteTools.length > 0 && !isSearching && (
+            <div className="flex flex-col gap-1">
+              <div className="flex h-7 shrink-0 items-center gap-2.5 px-3 text-[13px] font-semibold tracking-normal text-muted-foreground/70 select-none">
+                <Star className="h-4 w-4" />
+                <span className="flex-1">Favorites</span>
+              </div>
+              <div className="ml-3 border-l border-sidebar-border pl-2 flex flex-col gap-0.5">
+                <ul className="flex w-full min-w-0 flex-col gap-0.5">
+                  {favoriteTools.map((tool) => {
+                    const Icon = tool.icon
+                    return (
+                      <li key={tool.id} className="group/menu-item relative">
+                        <button
+                          className={`flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm outline-none transition-colors duration-150 cursor-pointer ${
+                            activeToolId === tool.id
+                              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium hover:bg-sidebar-primary/90"
+                              : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          }`}
+                          onClick={() => handleSelectTool(tool.id)}
+                        >
+                          <Icon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="text-xs">{tool.label}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+              <hr className="mx-0 my-1 border-sidebar-border/50" />
+            </div>
+          )}
 
-              {favoriteTools.length > 0 && !isSearching && !sidebarCollapsed && (
-                <SidebarGroup>
-                  <SidebarGroupLabel>
-                    <Star className="h-4 w-4" />
-                    <span className="flex-1">Favorites</span>
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {favoriteTools.map((tool) => {
+          {filteredCategories.map((category) => {
+            const isExpanded = isSearching || expandedGroups.has(category.title)
+            return (
+              <div key={category.title} className="flex flex-col gap-1">
+                <div
+                  className="flex h-7 shrink-0 items-center gap-2.5 px-3 mt-2 text-[13px] font-semibold tracking-normal text-muted-foreground/70 select-none cursor-pointer"
+                  onClick={() => toggleGroup(category.title)}
+                >
+                  <span className="flex-1">{category.title}</span>
+                  <ChevronRight
+                    className={`h-3 w-3 shrink-0 text-muted-foreground/50 transition-transform duration-200 ${
+                      isExpanded ? "rotate-90" : ""
+                    }`}
+                  />
+                </div>
+                {isExpanded && (
+                  <div className="ml-3 border-l border-sidebar-border pl-2 flex flex-col gap-0.5">
+                    <ul className="flex w-full min-w-0 flex-col gap-0.5">
+                      {category.tools.map((tool) => {
                         const Icon = tool.icon
                         return (
-                          <SidebarMenuItem key={tool.id}>
-                            <SidebarMenuButton
-                              isActive={activeToolId === tool.id}
+                          <li key={tool.id} className="group/menu-item relative">
+                            <button
+                              className="flex w-full items-center gap-2.5 overflow-hidden rounded-md p-2 pl-2 text-left text-sm outline-none transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer"
                               onClick={() => handleSelectTool(tool.id)}
                             >
-                              <Icon className="h-3.5 w-3.5" />
-                              <span className="text-xs">{tool.label}</span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
+                              <Icon className="h-3.5 w-3.5 shrink-0" />
+                              <span className="flex-1 truncate text-[13px] font-medium">{tool.label}</span>
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                className="ml-auto shrink-0 rounded-sm p-0.5 text-muted-foreground hover:text-primary transition-colors duration-150 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleFavorite(tool.id)
+                                }}
+                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); toggleFavorite(tool.id) } }}
+                                aria-label={favorites.has(tool.id) ? "Remove from favorites" : "Add to favorites"}
+                              >
+                                <Star
+                                  className={`h-3 w-3 ${favorites.has(tool.id) ? "fill-primary text-primary" : ""}`}
+                                />
+</span>
+                            </button>
+                          </li>
                         )
                       })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                  <SidebarSeparator />
-                </SidebarGroup>
-              )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
 
-              {filteredCategories.map((category) => {
-                const isExpanded = sidebarCollapsed || isSearching || expandedGroups.has(category.title)
-                return (
-                  <SidebarGroup key={category.title}>
-                    <SidebarGroupLabel
-                      className={`!h-6 !mt-2 ${!sidebarCollapsed ? "cursor-pointer" : ""}`}
-                      onClick={() => !sidebarCollapsed && toggleGroup(category.title)}
-                    >
-                      {!sidebarCollapsed && <span className="flex-1">{category.title}</span>}
-                      {!sidebarCollapsed && (
-                        <ChevronRight
-                          className={`h-3 w-3 shrink-0 text-muted-foreground/50 transition-transform duration-200 ${
-                            isExpanded ? "rotate-90" : ""
-                          }`}
-                        />
-                      )}
-                    </SidebarGroupLabel>
-                    {isExpanded && (
-                      <SidebarGroupContent>
-                        <SidebarMenu>
-                          {category.tools.map((tool) => {
-                            const Icon = tool.icon
-                            return (
-                              <SidebarMenuItem key={tool.id}>
-                                <SidebarMenuButton
-                                  isActive={activeToolId === tool.id}
-                                  onClick={() => handleSelectTool(tool.id)}
-                                  title={sidebarCollapsed ? tool.label : undefined}
-                                  className="!gap-2.5 !pl-2"
-                                >
-                                  <Icon className="h-3.5 w-3.5 shrink-0" />
-                                  {!sidebarCollapsed && <span className="flex-1 truncate text-[13px] font-medium">{tool.label}</span>}
-                                  {!sidebarCollapsed && (
-                                    <button
-                                      className="ml-auto shrink-0 rounded-sm p-0.5 text-muted-foreground hover:text-primary transition-colors duration-150 cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        toggleFavorite(tool.id)
-                                      }}
-                                      aria-label={favorites.has(tool.id) ? "Remove from favorites" : "Add to favorites"}
-                                    >
-                                      <Star
-                                        className={`h-3 w-3 ${favorites.has(tool.id) ? "fill-primary text-primary" : ""}`}
-                                      />
-                                    </button>
-                                  )}
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            )
-                          })}
-                        </SidebarMenu>
-                      </SidebarGroupContent>
-                    )}
-                  </SidebarGroup>
-                )
-              })}
-            </SidebarContent>
-
-            <SidebarFooter className="flex-col gap-1">
-              <Button
-                variant="ghost"
-                size={sidebarCollapsed ? "icon" : "sm"}
-                className={`${sidebarCollapsed ? "justify-center" : "w-full justify-start gap-2"} cursor-pointer hidden md:flex`}
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              >
-                {sidebarCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-                {!sidebarCollapsed && <span>Collapse</span>}
-              </Button>
-              <Button
-                variant="ghost"
-                size={sidebarCollapsed ? "icon" : "sm"}
-                className={sidebarCollapsed ? "justify-center cursor-pointer" : "w-full justify-start gap-2 cursor-pointer"}
-                onClick={toggleDarkMode}
-              >
-                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                {!sidebarCollapsed && (darkMode ? "Light Mode" : "Dark Mode")}
-              </Button>
-            </SidebarFooter>
-          </Sidebar>
-        </SidebarProvider>
+        <div className="flex flex-col gap-1 px-4 py-3">
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors duration-150 cursor-pointer"
+            onClick={toggleDarkMode}
+          >
+            {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
+          </button>
+        </div>
       </aside>
 
       <main className="flex-1 overflow-auto bg-background">
-        {!activeTool && (
-          <div className="flex items-center gap-3 border-b border-border px-4 py-3 md:hidden">
-            <button
-              className="rounded-md p-1.5 text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
-              onClick={() => setMobileMenuOpen(true)}
-            >
-              <PanelLeft className="h-5 w-5" />
-            </button>
-            <span className="text-sm font-semibold">DevToysWeb</span>
-          </div>
-        )}
         {activeTool ? (
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
-              <button
-                className="md:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
-                onClick={() => setMobileMenuOpen(true)}
-              >
-                <PanelLeft className="h-5 w-5" />
-              </button>
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
                 {(() => {
                   const Icon = activeTool.icon

@@ -15,6 +15,7 @@ import { JsonYamlConverter } from "./converters/JsonYamlConverter"
 import { JsonToTypeScript } from "./converters/JsonToTypeScript"
 import { UnitConverter } from "./converters/UnitConverter"
 import { SqlToEntity } from "./converters/SqlToEntity"
+import { CsvToJson } from "./converters/CsvToJson"
 import { HtmlEncoder } from "./encoders/HtmlEncoder"
 import { UrlEncoder } from "./encoders/UrlEncoder"
 import { Base64Encoder } from "./encoders/Base64Encoder"
@@ -72,6 +73,7 @@ export const toolCategories: ToolCategory[] = [
       { id: "json-to-typescript", label: "JSON → TypeScript", description: "Convert JSON to TypeScript interfaces", icon: Braces, component: JsonToTypeScript },
       { id: "unit-converter", label: "Unit Converter", description: "Convert length, weight, temperature, area, volume, speed, data units", icon: Ruler, component: UnitConverter },
       { id: "sql-to-entity", label: "SQL → Entity Class", description: "Convert SQL CREATE TABLE to Java, Kotlin, TypeScript, C#, Python, Go entity classes", icon: Code2, component: SqlToEntity },
+      { id: "csv-to-json", label: "CSV ↔ JSON", description: "Convert between CSV and JSON array formats", icon: Braces, component: CsvToJson },
     ],
   },
   {

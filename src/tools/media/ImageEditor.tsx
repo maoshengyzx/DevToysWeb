@@ -1,169 +1,584 @@
 import { useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { Download, Upload, RotateCcw, RotateCw, FlipHorizontal, FlipVertical } from "lucide-react"
+import {
+  Download, Upload, RotateCcw, RotateCw, FlipHorizontal, FlipVertical,
+  Crop, Maximize2, Sun, X, Check, Lock, Unlock,
+} from "lucide-react"
 
-type Filter = "none" | "grayscale" | "sepia" | "invert" | "blur" | "brightness" | "contrast" | "saturate"
+interface FilterState {
+  brightness: number
+  contrast: number
+  saturate: number
+  blur: number
+  hueRotate: number
+  sepia: number
+  grayscale: number
+  invert: number
+  opacity: number
+}
 
-const FILTERS: { label: string; value: Filter; css: string }[] = [
-  { label: "None", value: "none", css: "none" },
-  { label: "Grayscale", value: "grayscale", css: "grayscale(100%)" },
-  { label: "Sepia", value: "sepia", css: "sepia(100%)" },
-  { label: "Invert", value: "invert", css: "invert(100%)" },
-  { label: "Blur", value: "blur", css: "blur(2px)" },
-  { label: "Bright", value: "brightness", css: "brightness(1.5)" },
-  { label: "Contrast", value: "contrast", css: "contrast(1.5)" },
-  { label: "Saturate", value: "saturate", css: "saturate(2)" },
+const DEFAULTS: FilterState = {
+  brightness: 100, contrast: 100, saturate: 100, blur: 0,
+  hueRotate: 0, sepia: 0, grayscale: 0, invert: 0, opacity: 100,
+}
+
+const SLIDERS: { key: keyof FilterState; label: string; min: number; max: number; step: number; unit: string }[] = [
+  { key: "brightness", label: "Brightness", min: 0, max: 200, step: 1, unit: "%" },
+  { key: "contrast", label: "Contrast", min: 0, max: 200, step: 1, unit: "%" },
+  { key: "saturate", label: "Saturation", min: 0, max: 200, step: 1, unit: "%" },
+  { key: "blur", label: "Blur", min: 0, max: 20, step: 0.5, unit: "px" },
+  { key: "hueRotate", label: "Hue Rotate", min: 0, max: 360, step: 1, unit: "°" },
+  { key: "sepia", label: "Sepia", min: 0, max: 100, step: 1, unit: "%" },
+  { key: "grayscale", label: "Grayscale", min: 0, max: 100, step: 1, unit: "%" },
+  { key: "invert", label: "Invert", min: 0, max: 100, step: 1, unit: "%" },
+  { key: "opacity", label: "Opacity", min: 0, max: 100, step: 1, unit: "%" },
 ]
 
-const ROTATION_ICONS = [
-  { icon: RotateCw, label: "Rotate CW", action: "cw" as const },
-  { icon: RotateCcw, label: "Rotate CCW", action: "ccw" as const },
-  { icon: FlipHorizontal, label: "Flip H", action: "fh" as const },
-  { icon: FlipVertical, label: "Flip V", action: "fv" as const },
-]
+type Tool = "adjust" | "transform" | "crop" | "resize" | "format"
+type OutputFormat = "png" | "jpeg" | "webp"
+
+function buildFilterCSS(f: FilterState): string {
+  const parts: string[] = []
+  if (f.brightness !== 100) parts.push(`brightness(${f.brightness}%)`)
+  if (f.contrast !== 100) parts.push(`contrast(${f.contrast}%)`)
+  if (f.saturate !== 100) parts.push(`saturate(${f.saturate}%)`)
+  if (f.blur !== 0) parts.push(`blur(${f.blur}px)`)
+  if (f.hueRotate !== 0) parts.push(`hue-rotate(${f.hueRotate}deg)`)
+  if (f.sepia !== 0) parts.push(`sepia(${f.sepia}%)`)
+  if (f.grayscale !== 0) parts.push(`grayscale(${f.grayscale}%)`)
+  if (f.invert !== 0) parts.push(`invert(${f.invert}%)`)
+  if (f.opacity !== 100) parts.push(`opacity(${f.opacity}%)`)
+  return parts.length ? parts.join(" ") : "none"
+}
+
+function buildTransformCSS(rotation: number, flipH: boolean, flipV: boolean): string {
+  const parts: string[] = []
+  if (rotation) parts.push(`rotate(${rotation}deg)`)
+  if (flipH) parts.push("scaleX(-1)")
+  if (flipV) parts.push("scaleY(-1)")
+  return parts.length ? parts.join(" ") : "none"
+}
 
 export function ImageEditor() {
   const [sourceUrl, setSourceUrl] = useState("")
-  const [filter, setFilter] = useState<Filter>("none")
+  const [originalUrl, setOriginalUrl] = useState("")
+  const [filters, setFilters] = useState<FilterState>({ ...DEFAULTS })
   const [rotation, setRotation] = useState(0)
   const [flipH, setFlipH] = useState(false)
   const [flipV, setFlipV] = useState(false)
-  const [resultUrl, setResultUrl] = useState("")
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [tool, setTool] = useState<Tool>("adjust")
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>("png")
+  const [jpegQuality, setJpegQuality] = useState(92)
+  const [resizeW, setResizeW] = useState(0)
+  const [resizeH, setResizeH] = useState(0)
+  const [lockAspect, setLockAspect] = useState(true)
+  const [naturalW, setNaturalW] = useState(0)
+  const [naturalH, setNaturalH] = useState(0)
+  const [cropRect, setCropRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
+  const [displayScale, setDisplayScale] = useState({ x: 1, y: 1 })
+
+  const previewRef = useRef<HTMLImageElement>(null)
   const imgRef = useRef<HTMLImageElement | null>(null)
 
-  const handleUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const url = URL.createObjectURL(file)
-    setSourceUrl(url)
+  const loadImage = useCallback((url: string) => {
     const img = new Image()
-    img.onload = () => { imgRef.current = img }
+    img.onload = () => {
+      imgRef.current = img
+      setNaturalW(img.naturalWidth)
+      setNaturalH(img.naturalHeight)
+      setResizeW(img.naturalWidth)
+      setResizeH(img.naturalHeight)
+    }
     img.src = url
   }, [])
 
-  const applyTransform = useCallback(() => {
-    const img = imgRef.current
-    const canvas = canvasRef.current
-    if (!img || !canvas) return
-
-    const rad = (rotation * Math.PI) / 180
-    const sin = Math.abs(Math.sin(rad))
-    const cos = Math.abs(Math.cos(rad))
-    const w = img.width * cos + img.height * sin
-    const h = img.width * sin + img.height * cos
-
-    canvas.width = Math.round(w)
-    canvas.height = Math.round(h)
-    const ctx = canvas.getContext("2d")!
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    const filterCss = FILTERS.find((f) => f.value === filter)?.css || "none"
-    ctx.filter = filterCss
-
-    ctx.save()
-    ctx.translate(canvas.width / 2, canvas.height / 2)
-    ctx.rotate(rad)
-    ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1)
-    ctx.drawImage(img, -img.width / 2, -img.height / 2)
-    ctx.restore()
-
-    setResultUrl(canvas.toDataURL("image/png"))
-  }, [filter, rotation, flipH, flipV])
-
-  const handleTransform = (action: "cw" | "ccw" | "fh" | "fv") => {
-    switch (action) {
-      case "cw": setRotation((r) => (r + 90) % 360); break
-      case "ccw": setRotation((r) => (r - 90 + 360) % 360); break
-      case "fh": setFlipH((v) => !v); break
-      case "fv": setFlipV((v) => !v); break
-    }
-  }
-
-  const handleDownload = () => {
-    if (!resultUrl) return
-    const a = document.createElement("a")
-    a.href = resultUrl
-    a.download = "edited.png"
-    a.click()
-  }
-
-  const handleReset = () => {
+  const handleUpload = useCallback((file: File) => {
+    const url = URL.createObjectURL(file)
+    setSourceUrl(url)
+    setOriginalUrl(url)
+    loadImage(url)
+    setCropRect(null)
+    setFilters({ ...DEFAULTS })
     setRotation(0)
     setFlipH(false)
     setFlipV(false)
-    setFilter("none")
-    setResultUrl("")
+  }, [loadImage])
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) handleUpload(file)
   }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const file = e.dataTransfer.files[0]
+    if (file && file.type.startsWith("image/")) handleUpload(file)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget
+    imgRef.current = img
+    setNaturalW(img.naturalWidth)
+    setNaturalH(img.naturalHeight)
+    if (resizeW === 0 && resizeH === 0) {
+      setResizeW(img.naturalWidth)
+      setResizeH(img.naturalHeight)
+    }
+    const rect = img.getBoundingClientRect()
+    setDisplayScale({ x: rect.width / img.naturalWidth, y: rect.height / img.naturalHeight })
+  }
+
+  const filterCSS = buildFilterCSS(filters)
+  const transformCSS = buildTransformCSS(rotation, flipH, flipV)
+  const showTransform = tool !== "crop"
+
+  const toNaturalX = (clientX: number): number => {
+    const img = previewRef.current
+    if (!img) return 0
+    const rect = img.getBoundingClientRect()
+    return Math.round(Math.max(0, Math.min((clientX - rect.left) * naturalW / rect.width, naturalW)))
+  }
+
+  const toNaturalY = (clientY: number): number => {
+    const img = previewRef.current
+    if (!img) return 0
+    const rect = img.getBoundingClientRect()
+    return Math.round(Math.max(0, Math.min((clientY - rect.top) * naturalH / rect.height, naturalH)))
+  }
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (tool !== "crop") return
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+    const img = previewRef.current
+    if (img) {
+      const rect = img.getBoundingClientRect()
+      setDisplayScale({ x: rect.width / naturalW, y: rect.height / naturalH })
+    }
+    const x = toNaturalX(e.clientX)
+    const y = toNaturalY(e.clientY)
+    setDragStart({ x, y })
+    setIsDragging(true)
+    setCropRect(null)
+  }
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging || !dragStart) return
+    const x = toNaturalX(e.clientX)
+    const y = toNaturalY(e.clientY)
+    setCropRect({
+      x: Math.min(dragStart.x, x),
+      y: Math.min(dragStart.y, y),
+      w: Math.abs(x - dragStart.x),
+      h: Math.abs(y - dragStart.y),
+    })
+  }
+
+  const handlePointerUp = () => {
+    setIsDragging(false)
+    setDragStart(null)
+  }
+
+  const applyCrop = useCallback(() => {
+    if (!cropRect || !imgRef.current) return
+    const { x, y, w, h } = cropRect
+    if (w < 1 || h < 1) return
+    const canvas = document.createElement("canvas")
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext("2d")!
+    ctx.drawImage(imgRef.current, x, y, w, h, 0, 0, w, h)
+    canvas.toBlob((blob) => {
+      if (!blob) return
+      const url = URL.createObjectURL(blob)
+      setSourceUrl(url)
+      setCropRect(null)
+      setRotation(0)
+      setFlipH(false)
+      setFlipV(false)
+      const img = new Image()
+      img.onload = () => {
+        imgRef.current = img
+        setNaturalW(img.naturalWidth)
+        setNaturalH(img.naturalHeight)
+        setResizeW(img.naturalWidth)
+        setResizeH(img.naturalHeight)
+      }
+      img.src = url
+    }, "image/png")
+  }, [cropRect])
+
+  const handleResizeWChange = (val: number) => {
+    setResizeW(val)
+    if (lockAspect && naturalW > 0 && val > 0) {
+      const visualW = rotation === 90 || rotation === 270 ? naturalH : naturalW
+      const visualH = rotation === 90 || rotation === 270 ? naturalW : naturalH
+      setResizeH(Math.round(val * visualH / visualW))
+    }
+  }
+
+  const handleResizeHChange = (val: number) => {
+    setResizeH(val)
+    if (lockAspect && naturalH > 0 && val > 0) {
+      const visualW = rotation === 90 || rotation === 270 ? naturalH : naturalW
+      const visualH = rotation === 90 || rotation === 270 ? naturalW : naturalH
+      setResizeW(Math.round(val * visualW / visualH))
+    }
+  }
+
+  const handleDownload = useCallback(() => {
+    const img = imgRef.current
+    if (!img) return
+
+    const sx = cropRect ? cropRect.x : 0
+    const sy = cropRect ? cropRect.y : 0
+    const sw = cropRect ? cropRect.w : naturalW
+    const sh = cropRect ? cropRect.h : naturalH
+
+    const rad = (rotation * Math.PI) / 180
+    const absSin = Math.abs(Math.sin(rad))
+    const absCos = Math.abs(Math.cos(rad))
+    const rotW = Math.round(sw * absCos + sh * absSin)
+    const rotH = Math.round(sw * absSin + sh * absCos)
+
+    const finalW = (resizeW > 0 && resizeH > 0) ? resizeW : rotW
+    const finalH = (resizeW > 0 && resizeH > 0) ? resizeH : rotH
+
+    const canvas = document.createElement("canvas")
+    canvas.width = Math.round(finalW)
+    canvas.height = Math.round(finalH)
+    const ctx = canvas.getContext("2d")!
+
+    if (outputFormat === "jpeg") {
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }
+
+    ctx.filter = buildFilterCSS(filters)
+    ctx.save()
+    ctx.translate(canvas.width / 2, canvas.height / 2)
+    ctx.rotate(rad)
+    if (flipH) ctx.scale(-1, 1)
+    if (flipV) ctx.scale(1, -1)
+
+    const scale = (resizeW > 0 && resizeH > 0)
+      ? Math.min(finalW / rotW || 1, finalH / rotH || 1)
+      : 1
+    ctx.drawImage(img, sx, sy, sw, sh, -sw * scale / 2, -sh * scale / 2, sw * scale, sh * scale)
+    ctx.restore()
+
+    const mimeType = outputFormat === "jpeg" ? "image/jpeg" : `image/${outputFormat}`
+    const quality = outputFormat === "png" ? undefined : jpegQuality / 100
+    const dataUrl = canvas.toDataURL(mimeType, quality)
+    const a = document.createElement("a")
+    a.href = dataUrl
+    a.download = `edited.${outputFormat === "jpeg" ? "jpg" : outputFormat}`
+    a.click()
+  }, [cropRect, naturalW, naturalH, rotation, flipH, flipV, filters, outputFormat, jpegQuality, resizeW, resizeH])
+
+  const resetAll = () => {
+    if (originalUrl) {
+      setSourceUrl(originalUrl)
+      loadImage(originalUrl)
+    }
+    setFilters({ ...DEFAULTS })
+    setRotation(0)
+    setFlipH(false)
+    setFlipV(false)
+    setCropRect(null)
+    setTool("adjust")
+  }
+
+  const resetFilters = () => setFilters({ ...DEFAULTS })
+
+  const hasChanges = filters !== DEFAULTS || rotation !== 0 || flipH || flipV || cropRect
+
+  if (!sourceUrl) {
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <div
+          className="flex max-w-md flex-col items-center gap-4 rounded-xl border-2 border-dashed border-border p-12 transition-colors duration-150 cursor-pointer hover:border-primary/50"
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onClick={() => document.getElementById("editor-file-input")?.click()}
+        >
+          <Upload className="h-12 w-12 text-muted-foreground" />
+          <p className="text-lg font-medium text-foreground">Drop an image here or click to upload</p>
+          <p className="text-sm text-muted-foreground">PNG, JPG, WebP, GIF, SVG</p>
+          <input id="editor-file-input" type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
+        </div>
+      </div>
+    )
+  }
+
+  const cropDisplayStyle = cropRect ? {
+    left: cropRect.x * displayScale.x,
+    top: cropRect.y * displayScale.y,
+    width: cropRect.w * displayScale.x,
+    height: cropRect.h * displayScale.y,
+  } : null
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-border px-6 py-3 flex-wrap">
-        <span className="text-sm text-muted-foreground">Filter:</span>
-        {FILTERS.map((f) => (
-          <Button key={f.value} variant={filter === f.value ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => setFilter(f.value)}>
-            {f.label}
+      <div className="flex items-center justify-between border-b border-border px-4 py-2">
+        <div className="flex items-center gap-2">
+          <label className="cursor-pointer">
+            <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
+              <Upload className="h-3.5 w-3.5" />
+              Upload
+            </Button>
+            <input type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
+          </label>
+          {hasChanges && (
+            <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={resetAll}>
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reset All
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{naturalW} × {naturalH}</span>
+          <Button size="sm" className="gap-1.5 cursor-pointer" onClick={handleDownload}>
+            <Download className="h-3.5 w-3.5" />
+            Download
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1 border-b border-border px-4 py-1.5">
+        {([
+          { key: "adjust" as Tool, icon: Sun, label: "Adjust" },
+          { key: "transform" as Tool, icon: RotateCw, label: "Transform" },
+          { key: "crop" as Tool, icon: Crop, label: "Crop" },
+          { key: "resize" as Tool, icon: Maximize2, label: "Resize" },
+          { key: "format" as Tool, icon: Download, label: "Format" },
+        ]).map(({ key, icon: Icon, label }) => (
+          <Button
+            key={key}
+            variant={tool === key ? "default" : "ghost"}
+            size="sm"
+            className="gap-1.5 cursor-pointer"
+            onClick={() => setTool(key)}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
           </Button>
         ))}
       </div>
-      <div className="flex-1 overflow-auto p-6">
-        <div className="space-y-6 max-w-2xl">
-          {!sourceUrl ? (
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">Upload Image</label>
-              <label className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border px-4 py-12 cursor-pointer hover:border-primary transition-colors">
-                <Upload className="h-6 w-6 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Click to upload PNG, JPG, WebP, GIF</span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
-              </label>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground">Transform:</span>
-                {ROTATION_ICONS.map(({ icon: Icon, label, action }) => (
-                  <Button key={action} variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleTransform(action)} title={label}>
-                    <Icon className="h-3.5 w-3.5" />
-                    {label}
-                  </Button>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Button className="cursor-pointer" onClick={applyTransform}>Apply Filters & Transform</Button>
-                <Button variant="outline" className="cursor-pointer" onClick={handleReset}>Reset</Button>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-foreground">Original</label>
-                  <div className="flex items-center justify-center rounded-md border border-border bg-[repeating-conic-gradient(#80808015_0%_25%,transparent_0%_50%)] bg-[length:16px_16px] p-2 min-h-[200px]">
-                    <img src={sourceUrl} alt="Original" className="max-h-[300px] object-contain rounded" />
-                  </div>
-                </div>
-                {resultUrl && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-foreground">Result</label>
-                      <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleDownload}>
-                        <Download className="h-3.5 w-3.5" />
-                        Download PNG
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-center rounded-md border border-border bg-[repeating-conic-gradient(#80808015_0%_25%,transparent_0%_50%)] bg-[length:16px_16px] p-2 min-h-[200px]">
-                      <img src={resultUrl} alt="Result" className="max-h-[300px] object-contain rounded" />
-                    </div>
-                  </div>
+
+      {tool === "adjust" && (
+        <div className="border-b border-border px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-foreground">Adjustments</span>
+            <Button variant="ghost" size="sm" className="cursor-pointer text-xs" onClick={resetFilters}>Reset All</Button>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {SLIDERS.map(({ key, label, min, max, step, unit }) => (
+              <div key={key} className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-20 shrink-0">{label}</span>
+                <input
+                  type="range"
+                  min={min}
+                  max={max}
+                  step={step}
+                  value={filters[key]}
+                  onChange={(e) => setFilters({ ...filters, [key]: Number(e.target.value) })}
+                  className="flex-1 h-1.5 accent-indigo-500 cursor-pointer"
+                />
+                <span className="text-xs tabular-nums w-12 text-right text-muted-foreground">
+                  {key === "blur" ? filters[key].toFixed(1) : Math.round(filters[key])}{unit}
+                </span>
+                {filters[key] !== DEFAULTS[key] && (
+                  <button
+                    className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                    onClick={() => setFilters({ ...filters, [key]: DEFAULTS[key] })}
+                    title="Reset"
+                  >
+                    ↺
+                  </button>
                 )}
               </div>
-              {(rotation !== 0 || flipH || flipV) && (
-                <p className="text-xs text-muted-foreground">
-                  Rotation: {rotation}°{flipH ? " | Flipped H" : ""}{flipV ? " | Flipped V" : ""}
-                </p>
-              )}
-            </>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tool === "transform" && (
+        <div className="border-b border-border px-4 py-3">
+          <span className="text-sm font-medium text-foreground mb-2 block">Transform</span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => setRotation((r) => (r + 90) % 360)}>
+              <RotateCw className="h-3.5 w-3.5" /> Rotate CW
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => setRotation((r) => (r - 90 + 360) % 360)}>
+              <RotateCcw className="h-3.5 w-3.5" /> Rotate CCW
+            </Button>
+            <Button
+              variant={flipH ? "default" : "outline"}
+              size="sm"
+              className="gap-1.5 cursor-pointer"
+              onClick={() => setFlipH((v) => !v)}
+            >
+              <FlipHorizontal className="h-3.5 w-3.5" /> Flip H
+            </Button>
+            <Button
+              variant={flipV ? "default" : "outline"}
+              size="sm"
+              className="gap-1.5 cursor-pointer"
+              onClick={() => setFlipV((v) => !v)}
+            >
+              <FlipVertical className="h-3.5 w-3.5" /> Flip V
+            </Button>
+          </div>
+          {(rotation !== 0 || flipH || flipV) && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {rotation !== 0 && `Rotation: ${rotation}°`}
+              {rotation !== 0 && flipH && " · "}
+              {flipH && "Flipped H"}
+              {flipH && flipV && " · "}
+              {flipV && "Flipped V"}
+            </p>
           )}
         </div>
+      )}
+
+      {tool === "crop" && (
+        <div className="border-b border-border px-4 py-3">
+          <span className="text-sm font-medium text-foreground mb-2 block">Crop</span>
+          <p className="text-xs text-muted-foreground mb-2">
+            {cropRect
+              ? `Selection: ${cropRect.w} × ${cropRect.h} px`
+              : "Click and drag on the image to select a crop area"}
+          </p>
+          {cropRect && cropRect.w > 0 && cropRect.h > 0 && (
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="gap-1.5 cursor-pointer" onClick={applyCrop}>
+                <Check className="h-3.5 w-3.5" /> Apply Crop
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => setCropRect(null)}>
+                <X className="h-3.5 w-3.5" /> Cancel
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tool === "resize" && (
+        <div className="border-b border-border px-4 py-3">
+          <span className="text-sm font-medium text-foreground mb-2 block">Resize</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">W</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={resizeW}
+                onChange={(e) => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n > 0) handleResizeWChange(n) }}
+                className="h-8 w-20 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+              />
+            </div>
+            <span className="text-muted-foreground">×</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">H</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={resizeH}
+                onChange={(e) => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n > 0) handleResizeHChange(n) }}
+                className="h-8 w-20 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+              />
+            </div>
+            <button
+              className="p-1.5 rounded-md hover:bg-accent cursor-pointer"
+              onClick={() => setLockAspect(!lockAspect)}
+              title={lockAspect ? "Unlock aspect ratio" : "Lock aspect ratio"}
+            >
+              {lockAspect ? <Lock className="h-4 w-4 text-indigo-500" /> : <Unlock className="h-4 w-4 text-muted-foreground" />}
+            </button>
+            <span className="text-xs text-muted-foreground">px</span>
+          </div>
+        </div>
+      )}
+
+      {tool === "format" && (
+        <div className="border-b border-border px-4 py-3">
+          <span className="text-sm font-medium text-foreground mb-2 block">Output Format</span>
+          <div className="flex items-center gap-2 mb-3">
+            {(["png", "jpeg", "webp"] as OutputFormat[]).map((f) => (
+              <Button
+                key={f}
+                variant={outputFormat === f ? "default" : "outline"}
+                size="sm"
+                className="cursor-pointer"
+                onClick={() => setOutputFormat(f)}
+              >
+                {f.toUpperCase()}
+              </Button>
+            ))}
+          </div>
+          {(outputFormat === "jpeg" || outputFormat === "webp") && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground w-14">Quality</span>
+              <input
+                type="range"
+                min={1}
+                max={100}
+                step={1}
+                value={jpegQuality}
+                onChange={(e) => setJpegQuality(Number(e.target.value))}
+                className="flex-1 h-1.5 accent-indigo-500 cursor-pointer"
+              />
+              <span className="text-xs tabular-nums w-10 text-right text-muted-foreground">{jpegQuality}%</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex-1 overflow-auto p-4">
+        <div
+          className="flex items-center justify-center min-h-full"
+          style={{ cursor: tool === "crop" ? "crosshair" : "default" }}
+        >
+          <div
+            className="relative inline-block"
+            onPointerDown={tool === "crop" ? handlePointerDown : undefined}
+            onPointerMove={tool === "crop" ? handlePointerMove : undefined}
+            onPointerUp={tool === "crop" ? handlePointerUp : undefined}
+          >
+            <img
+              ref={previewRef}
+              src={sourceUrl}
+              alt="Preview"
+              className="max-h-[50vh] rounded border border-border"
+              style={{
+                filter: filterCSS,
+                transform: showTransform ? transformCSS : "none",
+              }}
+              onLoad={handleImageLoad}
+              draggable={false}
+            />
+            {tool === "crop" && cropDisplayStyle && (
+              <div
+                className="absolute border-2 border-dashed border-white pointer-events-none"
+                style={{
+                  left: cropDisplayStyle.left,
+                  top: cropDisplayStyle.top,
+                  width: cropDisplayStyle.width,
+                  height: cropDisplayStyle.height,
+                  boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
+                }}
+              />
+            )}
+          </div>
+        </div>
       </div>
-      <canvas ref={canvasRef} className="hidden" />
     </div>
   )
 }

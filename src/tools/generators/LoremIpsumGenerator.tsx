@@ -43,11 +43,10 @@ export function LoremIpsumGenerator() {
         </Select>
         <span className="text-sm text-muted-foreground">Count:</span>
         <input
-          type="number"
-          min={1}
-          max={100}
+          type="text"
+          inputMode="numeric"
           value={count}
-          onChange={(e) => setCount(Math.max(1, Number(e.target.value)))}
+          onChange={(e) => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 1) setCount(n) }}
           className="h-9 w-20 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>

@@ -176,7 +176,8 @@ export function UnitConverter() {
             <label className="text-sm font-medium text-foreground">From</label>
             <div className="flex gap-2">
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={fromValue}
                 onChange={(e) => handleFromChange(e.target.value)}
                 className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"

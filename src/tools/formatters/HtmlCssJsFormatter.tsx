@@ -6,8 +6,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { html as htmlBeautify, css as cssBeautify, js as jsBeautify } from "js-beautify"
 import { minify as terserMinify } from "terser"
-import CleanCSS from "clean-css"
-import { minify as htmlMinify } from "html-minifier-terser"
+import { minify as cssoMinify } from "csso"
 
 type Language = "html" | "css" | "js"
 
@@ -26,10 +25,18 @@ function formatCode(input: string, lang: Language, indent: number): string {
   }
 }
 
+function minifyHtml(input: string): string {
+  return input
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/>\s+</g, "><")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
 async function minifyCode(input: string, lang: Language): Promise<string> {
   switch (lang) {
-    case "html": return htmlMinify(input, { collapseWhitespace: true, removeComments: true, minifyCSS: true, minifyJS: true })
-    case "css": return new CleanCSS({ level: 2 }).minify(input).styles
+    case "html": return minifyHtml(input)
+    case "css": return cssoMinify(input, { compress: true }).css
     case "js": {
       const result = await terserMinify(input, { compress: true, mangle: false })
       return result.code ?? input
