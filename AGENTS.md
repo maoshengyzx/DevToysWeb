@@ -3,41 +3,56 @@
 ## Commands
 
 - `npm run dev` — Vite dev server
-- `npm run build` — `tsc -b && vite build` (typecheck then build; must pass both)
-- `npm run lint` — ESLint only
+- `npm run build` — `tsc -b && vite build` (must pass both; typecheck-then-build)
+- `npm run lint` — ESLint (react-hooks recommended rules + react-refresh)
 - `npm run preview` — preview production build
+- **Node must be on PATH**: `export PATH="/mnt/d/Program Files/nodejs:$PATH"` before any npm/npx command on this machine.
 
-No test framework is configured yet.
+No test framework is configured.
 
 ## Architecture
 
-- **Vite + React 19 + TypeScript** SPA (not Next.js). That project is in `../source/`.
-- **React Router v7** for URL-based navigation (`/:toolId` routes). Tool state persists across page refreshes.
-- Path alias `@/` → `src/`, configured in both `vite.config.ts` and `tsconfig.app.json`.
-- **Tailwind CSS v4** via `@tailwindcss/vite` plugin — no `tailwind.config.js`. Theme is defined inline in `src/index.css` using `@theme { }` blocks.
-- **Dark mode**: `@custom-variant dark (&:is(.dark *));` in `index.css` enables Tailwind's `dark:` variant via `.dark` class on `<html>`. Plain CSS variables in `.dark {}` override `:root` theme. **Do not use `@theme inline`** — it hardcodes values and breaks dark mode variable overrides.
-- **shadcn/ui components** are hand-maintained in `src/components/ui/` (not via CLI). `src/lib/utils.ts` provides the `cn()` utility (clsx + tailwind-merge).
+- **Vite + React 19 + TypeScript** SPA (not Next.js). The other project is in `../source/`.
+- **React Router v7** for `/:toolId` routes. Tool state persists across page refreshes.
+- Path alias `@/` → `src/`, configured in `vite.config.ts` and `tsconfig.app.json`.
+- **Tailwind CSS v4** via `@tailwindcss/vite` plugin — no `tailwind.config.js`. Theme lives in `src/index.css` `@theme { }` blocks.
+- **Dark mode**: `@custom-variant dark (&:is(.dark *));` enables `dark:` variant via `.dark` class on `<html>`. Plain CSS variables in `.dark {}` override `:root`. **Never use `@theme inline`** — it hardcodes values and breaks dark mode variable overrides.
+- **shadcn/ui**: hand-maintained in `src/components/ui/` (not via CLI). `src/lib/utils.ts` has `cn()` (clsx + tailwind-merge).
 
 ## Tool System
 
-- All tools are registered in `src/tools/registry.ts` as `ToolDefinition` objects with `id`, `label`, `description`, `icon`, `component`.
-- Each tool category is defined as a `ToolCategory` with `title`, `icon`, and `tools[]`.
-- Tool components live in `src/tools/{converters,encoders,formatters,generators,text,extras}/`.
+- All tools registered in `src/tools/registry.ts` as `ToolDefinition` objects (`id`, `label`, `description`, `icon`, `component`).
+- Tool directories: `src/tools/{converters,encoders,formatters,generators,text,extras,media,web}/`. Shared logic goes in `src/tools/extras/utils.ts`.
 - Shared layouts: `EncoderDecoderLayout.tsx` (encode/decode with swap), `FormatterLayout.tsx` (format/minify with indent options).
-- Tools use real-time conversion (output updates on every keystroke), copy-to-clipboard, and localStorage for recent/favorites.
+- Shared UI: `src/components/ui/shared.tsx` → `Textarea`, `ReadOnlyTextarea`, `Select`. `src/components/ui/error-banner.tsx` → `ErrorBanner`. `src/hooks/useCopyToClipboard.ts` for copy buttons.
+- Adding a new tool: (1) create component in the right directory, (2) import in `registry.ts`, (3) add `ToolDefinition` entry with a `lucide-react` icon.
+
+## TypeScript & ESLint Gotchas
+
+These are enforced and will fail build or lint:
+
+- **`noUnusedLocals` / `noUnusedParameters`** — unused imports/vars cause type errors. Remove them.
+- **`verbatimModuleSyntax`** — type-only exports must use `export type { X }`, not `export { X }`.
+- **`erasableSyntaxOnly`** — `enum` and `namespace` are banned; use `const` objects instead.
+- **`react-hooks/static-components`** — never define a React component inside another component's render. Extract it to module scope.
+- **`react-hooks/set-state-in-render`** — use `useState(() => compute())` lazy initializer instead of `useEffect(() => setState(compute()), [])`.
+- **`no-useless-assignment`** — don't assign a value to a `let` and then unconditionally reassign before reading. Use `const` or restructure.
+- **`preserve-caught-error`** — when re-throwing, use `throw new Error(msg, { cause: e })`.
+- **`filter(Boolean)` doesn't narrow** — use `.filter((t): t is T => t !== undefined)`.
+- **Custom type declarations** for packages without `@types` go in `src/types/` (e.g., `xml-formatter.d.ts`).
 
 ## Key Conventions
 
-- Default theme is dark (`.dark` added on mount in `App.tsx`).
+- Default theme is dark (`.dark` on `<html>` in `App.tsx`).
 - Font: Plus Jakarta Sans (Google Fonts import in `index.css`).
 - Color palette: indigo primary (`#6366f1` light / `#818cf8` dark).
-- Icons: `lucide-react` (no emoji icons).
-- Sidebar is collapsible on desktop, hidden with back button on mobile.
-- `noUnusedLocals` and `noUnusedParameters` are enabled — unused imports cause build errors.
+- Icons: `lucide-react` only (no emoji icons). Always verify the icon name exists before using.
+- Sidebar: collapsible on desktop, drawer on mobile. Category labels use `text-[13px] font-semibold`. Tool items use `text-[13px] font-medium`. No uppercase or tracking-wide anywhere.
+- "All Tools" link replaces "Recent" as the first sidebar item.
+- No code comments unless explicitly requested.
+- No `zustand`; state is `useState` + `localStorage`.
+- No i18n.
 
-## Gotchas
+## Build Warning
 
-- `tsconfig.app.json` has `ignoreDeprecations: "6.0"` because `baseUrl`/`paths` are deprecated in TS 7+. Needed for `@/` alias.
-- Node is available at `/mnt/d/Program Files/nodejs/` on this machine. Add to `$PATH` before running npm/npx commands.
-- Key dependencies: `js-yaml` (JSON↔YAML), `sql-formatter` (SQL formatting), `marked` (Markdown rendering), `react-router-dom` (routing).
-- The `filter(Boolean)` pattern doesn't narrow types in strict TS — use `.filter((t): t is T => t !== undefined)` instead.
+- Chunk size >700KB warning is expected (all tools are in one bundle). Can be fixed later with `React.lazy` / dynamic imports.

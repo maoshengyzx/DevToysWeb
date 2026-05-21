@@ -2,6 +2,17 @@ import { useState, useMemo } from "react"
 import { Textarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 
+const COMMON_PATTERNS = [
+  { label: "Email", pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, regex: "[^\\s@]+@[^\\s@]+\\.[^\\s@]+" },
+  { label: "URL", pattern: /^https?:\/\/.+/ , regex: "https?://\\S+" },
+  { label: "IPv4", pattern: /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/, regex: "(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)" },
+  { label: "Phone", pattern: /^\+?[\d\s\-()]{7,15}$/, regex: "\\+?[\\d\\s\\-()]{7,15}" },
+  { label: "Date (YYYY-MM-DD)", pattern: /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/, regex: "\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])" },
+  { label: "Hex Color", pattern: /^#(?:[0-9a-fA-F]{3}){1,2}$/, regex: "#(?:[0-9a-fA-F]{3}){1,2}" },
+  { label: "Digits Only", pattern: /^\d+$/, regex: "\\d+" },
+  { label: "Alphanumeric", pattern: /^[a-zA-Z0-9]+$/, regex: "[a-zA-Z0-9]+" },
+]
+
 const flags = [
   { label: "Global (g)", value: "g" },
   { label: "Case insensitive (i)", value: "i" },
@@ -63,7 +74,7 @@ export function RegexTester() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-b border-border px-6 py-3">
+      <div className="flex items-center gap-3 border-b border-border px-6 py-3 flex-wrap">
         <span className="text-sm text-muted-foreground">Flags:</span>
         <div className="flex gap-1">
           {flags.map((f) => (
@@ -90,6 +101,22 @@ export function RegexTester() {
             className="h-9 w-full rounded-md border border-input bg-background px-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
           {error && <span className="text-xs text-destructive">{error}</span>}
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-foreground">Common Patterns</label>
+          <div className="flex flex-wrap gap-1.5">
+            {COMMON_PATTERNS.map((p) => (
+              <Button
+                key={p.label}
+                variant="outline"
+                size="sm"
+                className="cursor-pointer text-xs"
+                onClick={() => setRegex(p.regex)}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
         </div>
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-foreground">Test String</label>

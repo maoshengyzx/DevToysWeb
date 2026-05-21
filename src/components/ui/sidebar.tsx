@@ -69,7 +69,7 @@ function SidebarGroupLabel({
     <div
       data-sidebar-group-label
       className={cn(
-        "flex h-7 shrink-0 items-center gap-2.5 px-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 select-none",
+        "flex h-7 shrink-0 items-center gap-2.5 px-3 text-[13px] font-semibold tracking-normal text-muted-foreground/70 select-none",
         className
       )}
       {...props}

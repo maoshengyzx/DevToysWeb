@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   Wrench,
@@ -7,10 +7,10 @@ import {
   Sun,
   ChevronRight,
   Star,
-  Clock,
   PanelLeftClose,
   PanelLeft,
   X,
+  LayoutGrid,
 } from "lucide-react"
 import {
   SidebarProvider,
@@ -31,7 +31,6 @@ import { Button } from "@/components/ui/button"
 import { toolCategories, getToolById } from "@/tools/registry"
 import type { ToolDefinition } from "@/tools/registry"
 
-const RECENT_KEY = "devtoysweb-recent"
 const FAVORITES_KEY = "devtoysweb-favorites"
 
 function loadList(key: string): string[] {
@@ -44,12 +43,6 @@ function loadList(key: string): string[] {
 
 function saveList(key: string, list: string[]) {
   localStorage.setItem(key, JSON.stringify(list))
-}
-
-function addRecent(id: string) {
-  const list = loadList(RECENT_KEY).filter((x) => x !== id)
-  list.unshift(id)
-  saveList(RECENT_KEY, list.slice(0, 5))
 }
 
 function WelcomePage({ onSelectTool }: { onSelectTool: (id: string) => void }) {
@@ -103,12 +96,6 @@ function App() {
     return true
   })
 
-  useEffect(() => {
-    if (activeToolId) {
-      addRecent(activeToolId)
-    }
-  }, [activeToolId])
-
   const handleSelectTool = (id: string) => {
     setMobileMenuOpen(false)
     navigate(`/${id}`)
@@ -147,8 +134,6 @@ function App() {
     }))
     .filter((category) => category.tools.length > 0)
 
-  const recentToolIds = loadList(RECENT_KEY)
-  const recentTools = recentToolIds.map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined)
   const favoriteTools = Array.from(favorites).map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined)
 
   const toggleDarkMode = () => {
@@ -209,33 +194,20 @@ function App() {
             )}
 
             <SidebarContent>
-              {recentTools.length > 0 && !isSearching && !sidebarCollapsed && (
-                <SidebarGroup>
-                  <SidebarGroupLabel>
-                    <Clock className="h-4 w-4" />
-                    <span className="flex-1">Recent</span>
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {recentTools.map((tool) => {
-                        const Icon = tool.icon
-                        return (
-                          <SidebarMenuItem key={tool.id}>
-                            <SidebarMenuButton
-                              isActive={activeToolId === tool.id}
-                              onClick={() => handleSelectTool(tool.id)}
-                            >
-                              <Icon className="h-3.5 w-3.5" />
-                              <span className="text-xs">{tool.label}</span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        )
-                      })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                  <SidebarSeparator />
-                </SidebarGroup>
+              {!isSearching && !sidebarCollapsed && (
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={!activeToolId}
+                      onClick={() => navigate("/")}
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                      <span className="flex-1">All Tools</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
               )}
+              <SidebarSeparator />
 
               {favoriteTools.length > 0 && !isSearching && !sidebarCollapsed && (
                 <SidebarGroup>
@@ -295,8 +267,8 @@ function App() {
                                   title={sidebarCollapsed ? tool.label : undefined}
                                   className="!gap-2.5 !pl-2"
                                 >
-                                  <Icon className="h-4 w-4 shrink-0" />
-                                  {!sidebarCollapsed && <span className="flex-1 truncate text-[13px]">{tool.label}</span>}
+                                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                                  {!sidebarCollapsed && <span className="flex-1 truncate text-[13px] font-medium">{tool.label}</span>}
                                   {!sidebarCollapsed && (
                                     <button
                                       className="ml-auto shrink-0 rounded-sm p-0.5 text-muted-foreground hover:text-primary transition-colors duration-150 cursor-pointer"
