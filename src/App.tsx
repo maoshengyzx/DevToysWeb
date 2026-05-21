@@ -11,6 +11,7 @@ import {
   PanelLeft,
   X,
   LayoutGrid,
+  Clock,
 } from "lucide-react"
 import {
   SidebarProvider,
@@ -32,6 +33,9 @@ import { toolCategories, getToolById } from "@/tools/registry"
 import type { ToolDefinition } from "@/tools/registry"
 
 const FAVORITES_KEY = "devtoysweb-favorites"
+const THEME_KEY = "devtoysweb-theme"
+const RECENT_KEY = "devtoysweb-recent"
+const MAX_RECENT = 5
 
 function loadList(key: string): string[] {
   try {
@@ -45,36 +49,116 @@ function saveList(key: string, list: string[]) {
   localStorage.setItem(key, JSON.stringify(list))
 }
 
-function WelcomePage({ onSelectTool }: { onSelectTool: (id: string) => void }) {
-  const allTools = toolCategories.flatMap((cat) =>
-    cat.tools.map((tool) => ({ ...tool, categoryTitle: cat.title, categoryIcon: cat.icon }))
-  )
+function getInitialDarkMode(): boolean {
+  const saved = localStorage.getItem(THEME_KEY)
+  if (saved === "dark") return true
+  if (saved === "light") return false
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+}
+
+function WelcomePage({
+  onSelectTool,
+  recentTools,
+  searchState,
+}: {
+  onSelectTool: (id: string) => void
+  recentTools: ToolDefinition[]
+  searchState: [string, (s: string) => void]
+}) {
+  const [welcomeSearch, setWelcomeSearch] = searchState
+  const isSearching = welcomeSearch.trim().length > 0
+
+  const filteredCategories = toolCategories
+    .map((cat) => ({
+      ...cat,
+      tools: isSearching
+        ? cat.tools.filter((t) =>
+            t.label.toLowerCase().includes(welcomeSearch.toLowerCase()) ||
+            t.description.toLowerCase().includes(welcomeSearch.toLowerCase())
+          )
+        : cat.tools,
+    }))
+    .filter((cat) => cat.tools.length > 0)
+
   return (
-    <div className="flex h-full flex-col items-center justify-center px-8">
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-        <Wrench className="h-8 w-8 text-primary" />
+    <div className="flex h-full flex-col overflow-auto">
+      <div className="flex flex-col items-center px-8 pt-12 pb-6">
+        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+          <Wrench className="h-8 w-8 text-primary" />
+        </div>
+        <h1 className="mb-2 text-2xl font-bold text-foreground">
+          Welcome to DevToysWeb
+        </h1>
+        <p className="mb-6 max-w-md text-center text-muted-foreground">
+          A collection of developer tools at your fingertips. Search or browse below.
+        </p>
+        <div className="relative w-full max-w-lg">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search tools..."
+            className="pl-9"
+            value={welcomeSearch}
+            onChange={(e) => setWelcomeSearch(e.target.value)}
+          />
+        </div>
       </div>
-      <h1 className="mb-2 text-2xl font-bold text-foreground">
-        Welcome to DevToysWeb
-      </h1>
-      <p className="mb-8 max-w-md text-center text-muted-foreground">
-        A collection of developer tools at your fingertips. Click a tool below or
-        use the sidebar to get started.
-      </p>
-      <div className="grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-        {allTools.map((tool) => {
-          const Icon = tool.icon
+
+      <div className="flex-1 px-8 pb-8 space-y-8 max-w-4xl mx-auto">
+        {!isSearching && recentTools.length > 0 && (
+          <div>
+            <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Recent</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {recentTools.map((tool) => {
+                const Icon = tool.icon
+                return (
+                  <button
+                    key={tool.id}
+                    className="flex flex-col items-center gap-2 rounded-lg border border-border bg-card px-3 py-4 text-sm text-card-foreground transition-colors duration-150 hover:border-primary/40 hover:bg-accent cursor-pointer"
+                    onClick={() => onSelectTool(tool.id)}
+                  >
+                    <Icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                    <span className="text-center leading-tight text-xs">{tool.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {filteredCategories.map((cat) => {
+          const CatIcon = cat.icon
           return (
-            <button
-              key={tool.id}
-              className="flex flex-col items-center gap-2 rounded-lg border border-border bg-card px-3 py-4 text-sm text-card-foreground transition-colors duration-150 hover:border-primary/40 hover:bg-accent cursor-pointer"
-              onClick={() => onSelectTool(tool.id)}
-            >
-              <Icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
-              <span className="text-center leading-tight text-xs">{tool.label}</span>
-            </button>
+            <div key={cat.title}>
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <CatIcon className="h-4 w-4" />
+                {cat.title}
+                <span className="text-xs font-normal">({cat.tools.length})</span>
+              </h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                {cat.tools.map((tool) => {
+                  const Icon = tool.icon
+                  return (
+                    <button
+                      key={tool.id}
+                      className="flex flex-col items-center gap-2 rounded-lg border border-border bg-card px-3 py-4 text-sm text-card-foreground transition-colors duration-150 hover:border-primary/40 hover:bg-accent cursor-pointer"
+                      onClick={() => onSelectTool(tool.id)}
+                    >
+                      <Icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                      <span className="text-center leading-tight text-xs">{tool.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           )
         })}
+
+        {isSearching && filteredCategories.length === 0 && (
+          <div className="flex h-32 items-center justify-center text-muted-foreground">
+            No tools found matching &quot;{welcomeSearch}&quot;
+          </div>
+        )}
       </div>
     </div>
   )
@@ -89,15 +173,31 @@ function App() {
   const [search, setSearch] = useState("")
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set(loadList(FAVORITES_KEY)))
+  const [recent, setRecent] = useState<string[]>(() => {
+    const saved = loadList(RECENT_KEY)
+    if (activeToolId && !saved.includes(activeToolId)) {
+      const next = [activeToolId, ...saved].slice(0, MAX_RECENT)
+      saveList(RECENT_KEY, next)
+      return next
+    }
+    return saved
+  })
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(() => {
-    document.documentElement.classList.add("dark")
-    return true
+    const isDark = getInitialDarkMode()
+    if (isDark) document.documentElement.classList.add("dark")
+    else document.documentElement.classList.remove("dark")
+    return isDark
   })
 
   const handleSelectTool = (id: string) => {
     setMobileMenuOpen(false)
+    setRecent((prev) => {
+      const next = [id, ...prev.filter((r) => r !== id)].slice(0, MAX_RECENT)
+      saveList(RECENT_KEY, next)
+      return next
+    })
     navigate(`/${id}`)
   }
 
@@ -135,10 +235,15 @@ function App() {
     .filter((category) => category.tools.length > 0)
 
   const favoriteTools = Array.from(favorites).map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined)
+  const recentTools = recent.map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined)
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode)
-    document.documentElement.classList.toggle("dark")
+    setDarkMode((prev) => {
+      const next = !prev
+      document.documentElement.classList.toggle("dark", next)
+      localStorage.setItem(THEME_KEY, next ? "dark" : "light")
+      return next
+    })
   }
 
   return (
@@ -208,6 +313,34 @@ function App() {
                 </SidebarMenu>
               )}
               <SidebarSeparator />
+
+              {recentTools.length > 0 && !isSearching && !sidebarCollapsed && (
+                <SidebarGroup>
+                  <SidebarGroupLabel>
+                    <Clock className="h-4 w-4" />
+                    <span className="flex-1">Recent</span>
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {recentTools.map((tool) => {
+                        const Icon = tool.icon
+                        return (
+                          <SidebarMenuItem key={tool.id}>
+                            <SidebarMenuButton
+                              isActive={activeToolId === tool.id}
+                              onClick={() => handleSelectTool(tool.id)}
+                            >
+                              <Icon className="h-3.5 w-3.5" />
+                              <span className="text-xs">{tool.label}</span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                  <SidebarSeparator />
+                </SidebarGroup>
+              )}
 
               {favoriteTools.length > 0 && !isSearching && !sidebarCollapsed && (
                 <SidebarGroup>
@@ -356,7 +489,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <WelcomePage onSelectTool={handleSelectTool} />
+          <WelcomePage onSelectTool={handleSelectTool} recentTools={recentTools} searchState={[search, setSearch]} />
         )}
       </main>
     </div>

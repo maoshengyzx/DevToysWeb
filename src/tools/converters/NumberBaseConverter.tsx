@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Textarea, Select } from "@/components/ui/shared"
+import { ErrorBanner } from "@/components/ui/error-banner"
 
 const bases = [
   { value: 2, label: "Binary (2)" },
@@ -48,8 +49,8 @@ export function NumberBaseConverter() {
         <Select value={String(toBase)} onChange={(e) => setToBase(Number(e.target.value))}>
           {bases.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
         </Select>
-        {error && <span className="ml-auto text-xs text-destructive">{error}</span>}
       </div>
+      {error && <ErrorBanner message={error} />}
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">

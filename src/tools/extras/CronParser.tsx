@@ -2,6 +2,7 @@ import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { CronExpressionParser } from "cron-parser"
 import cronstrue from "cronstrue"
+import { ErrorBanner } from "@/components/ui/error-banner"
 
 const PRESETS = [
   { label: "Every minute", cron: "* * * * *" },
@@ -46,7 +47,7 @@ CronExpressionParser.parse(cron)
               placeholder="* * * * *"
               className="h-9 w-full rounded-md border border-input bg-background px-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
-            {error && <span className="text-xs text-destructive">{error}</span>}
+            {error && <ErrorBanner message={error} />}
           </div>
 
           {description && !error && (

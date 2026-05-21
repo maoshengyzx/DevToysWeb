@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Copy, Check } from "lucide-react"
 import { numberToChineseAmount, CHINESE_NUM } from "../extras/utils"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { ErrorBanner } from "@/components/ui/error-banner"
 
 export function NumberToChineseAmount() {
   const [input, setInput] = useState("")
@@ -38,7 +39,7 @@ export function NumberToChineseAmount() {
                 className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
-            {error && <div className="mt-1 text-xs text-red-500">{error}</div>}
+            {error && <ErrorBanner message={error} />}
           </div>
 
           {result && (
