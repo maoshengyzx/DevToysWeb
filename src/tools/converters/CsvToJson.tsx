@@ -185,11 +185,6 @@ export function CsvToJson() {
     }
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
-
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -234,12 +229,18 @@ export function CsvToJson() {
           </Button>
         </div>
       </div>
+      <div
+        className="flex items-center gap-3 border-b border-dashed border-border px-6 py-2.5 cursor-pointer hover:bg-accent/30 transition-colors"
+        onClick={() => document.getElementById("csv-json-file-input")?.click()}
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+      >
+        <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
+        <span className="text-sm text-muted-foreground">Drop a .csv or .json file here, or <span className="text-primary underline underline-offset-2 cursor-pointer">browse</span> to upload</span>
+        <input type="file" accept=".csv,.json,text/csv,application/json" className="hidden" onChange={handleFileUpload} id="csv-json-file-input" />
+      </div>
       <div className="flex-1 overflow-auto p-6">
-        <div
-          className="grid gap-6 md:grid-cols-2"
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-        >
+        <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">
