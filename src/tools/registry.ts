@@ -7,7 +7,7 @@ import {
   Braces, Terminal, FileCode, FileJson, MessageSquare,
   Ruler, Timer, ListFilter, Calculator,
   Image, QrCode, FileImage, PenTool, ImageDown,
-  Gauge, FileSearch, SearchCode, Bot, GitCompareArrows,
+  Gauge, FileSearch, Bot, GitCompareArrows,
 } from "lucide-react"
 
 import { NumberBaseConverter } from "./converters/NumberBaseConverter"
@@ -45,7 +45,7 @@ import { ImageCompressor } from "./media/ImageCompressor"
 import { IcoGenerator } from "./media/IcoGenerator"
 import { SvgConverter } from "./media/SvgConverter"
 import { ImageEditor } from "./media/ImageEditor"
-import { DomainWhoisLookup } from "./web/DomainWhoisLookup"
+
 import { WebsiteSpeedTest } from "./web/WebsiteSpeedTest"
 import { SeoMetaAnalyzer } from "./web/SeoMetaAnalyzer"
 import { RobotsTxtGenerator } from "./web/RobotsTxtGenerator"
@@ -143,7 +143,7 @@ export const toolCategories: ToolCategory[] = [
     title: "Web",
     icon: Globe,
     tools: [
-      { id: "domain-whois", label: "Domain Whois", description: "Look up domain registration information and registrar details", icon: SearchCode, component: DomainWhoisLookup },
+      
       { id: "website-speed", label: "Website Speed Test", description: "Test website loading time and analyze performance", icon: Gauge, component: WebsiteSpeedTest },
       { id: "seo-meta", label: "SEO Meta Analyzer", description: "Analyze SEO meta tags, Open Graph, and Twitter cards", icon: FileSearch, component: SeoMetaAnalyzer },
       { id: "robots-txt", label: "robots.txt Generator", description: "Generate a properly formatted robots.txt file", icon: Bot, component: RobotsTxtGenerator },
