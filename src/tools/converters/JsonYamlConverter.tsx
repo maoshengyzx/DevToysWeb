@@ -1,7 +1,9 @@
 import { EncoderDecoder } from "@/tools/EncoderDecoderLayout"
 import yaml from "js-yaml"
+import { useLocale } from "@/i18n/useLocale"
 
 export function JsonYamlConverter() {
+  const { t } = useLocale()
   const jsonToYaml = (input: string): string => {
     const obj = JSON.parse(input)
     return yaml.dump(obj, { indent: 2, lineWidth: -1 })
@@ -16,9 +18,9 @@ export function JsonYamlConverter() {
     <EncoderDecoder
       encode={jsonToYaml}
       decode={yamlToJson}
-      encodeLabel="JSON → YAML"
-      decodeLabel="YAML → JSON"
-      inputPlaceholder="Paste JSON or YAML here..."
+      encodeLabel={t("tool.jsonYaml.jsonToYaml")}
+      decodeLabel={t("tool.jsonYaml.yamlToJson")}
+      inputPlaceholder={t("tool.jsonYaml.placeholder")}
     />
   )
 }

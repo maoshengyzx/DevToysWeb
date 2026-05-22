@@ -1,3 +1,4 @@
+import { useLocale } from "@/i18n/useLocale"
 import { EncoderDecoder } from "@/tools/EncoderDecoderLayout"
 import { encode as heEncode, decode as heDecode } from "he"
 
@@ -10,13 +11,14 @@ function decodeHtml(input: string): string {
 }
 
 export function HtmlEncoder() {
+  const { t } = useLocale()
   return (
     <EncoderDecoder
       encode={encodeHtml}
       decode={decodeHtml}
-      encodeLabel="Encode"
-      decodeLabel="Decode"
-      inputPlaceholder="Paste HTML to encode/decode..."
+      encodeLabel={t("tool.htmlEncode.encode")}
+      decodeLabel={t("tool.htmlEncode.decode")}
+      inputPlaceholder={t("tool.htmlEncode.placeholder")}
     />
   )
 }

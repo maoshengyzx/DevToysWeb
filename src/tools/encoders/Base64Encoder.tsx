@@ -1,3 +1,4 @@
+import { useLocale } from "@/i18n/useLocale"
 import { useState, useCallback } from "react"
 import { Textarea, ReadOnlyTextarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
@@ -26,6 +27,7 @@ function formatSize(bytes: number): string {
 }
 
 export function Base64Encoder() {
+  const { t } = useLocale()
   const [tab, setTab] = useState<Tab>("text")
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
@@ -108,9 +110,9 @@ export function Base64Encoder() {
 
   const tabBar = (
     <div className="flex items-center gap-2 border-b border-border px-6 py-3">
-      <Button variant={tab === "text" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setTab("text"); setError(""); setInput(""); setOutput("") }}>Text</Button>
-      <Button variant={tab === "image" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setTab("image"); setError(""); setInput(""); setOutput("") }}>Image</Button>
-      <Button variant={tab === "file" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setTab("file"); setError(""); setInput(""); setOutput("") }}>File</Button>
+      <Button variant={tab === "text" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setTab("text"); setError(""); setInput(""); setOutput("") }}>{t("tool.base64.text")}</Button>
+      <Button variant={tab === "image" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setTab("image"); setError(""); setInput(""); setOutput("") }}>{t("tool.base64.image")}</Button>
+      <Button variant={tab === "file" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setTab("file"); setError(""); setInput(""); setOutput("") }}>{t("tool.base64.file")}</Button>
     </div>
   )
 
@@ -131,8 +133,8 @@ export function Base64Encoder() {
               ) : (
                 <>
                   <Upload className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Drop an image here or click to upload</p>
-                  <p className="text-xs text-muted-foreground">PNG, JPG, GIF, SVG, WebP</p>
+                  <p className="text-sm text-muted-foreground">{t("tool.base64.dropImage")}</p>
+                  <p className="text-xs text-muted-foreground">{t("tool.base64.supportedImageFormats")}</p>
                 </>
               )}
               <input id="base64-image-input" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
@@ -140,29 +142,29 @@ export function Base64Encoder() {
             {output && (
               <>
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-foreground">Base64 Data URL</label>
+                  <label className="text-sm font-medium text-foreground">{t("tool.base64.base64DataUrl")}</label>
                   <ReadOnlyTextarea value={output} className="min-h-[100px]" />
                 </div>
                 {imgTag && (
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-foreground">HTML img Tag</label>
+                    <label className="text-sm font-medium text-foreground">{t("tool.base64.htmlImgTag")}</label>
                     <ReadOnlyTextarea value={imgTag} className="min-h-[60px]" />
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                    Copy Base64
+                    {t("tool.base64.copyBase64")}
                   </Button>
                   {imgTag && (
                     <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(imgTag)}>
                       <Code2 className="h-3.5 w-3.5" />
-                      Copy img Tag
+                      {t("tool.base64.copyImgTag")}
                     </Button>
                   )}
                   <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
                     <Trash2 className="h-3.5 w-3.5" />
-                    Clear
+                    {t("shared.clear")}
                   </Button>
                 </div>
               </>
@@ -192,42 +194,42 @@ export function Base64Encoder() {
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-border px-6 py-3 flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Button variant={mode === "encode" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => handleModeButton("encode")}>Encode</Button>
-          <Button variant={mode === "decode" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => handleModeButton("decode")}>Decode</Button>
+          <Button variant={mode === "encode" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => handleModeButton("encode")}>{t("tool.base64.encode")}</Button>
+          <Button variant={mode === "decode" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => handleModeButton("decode")}>{t("tool.base64.decode")}</Button>
           <div className="w-px h-4 bg-border" />
-          <Button variant={mode === "encode" && tab === "text" ? "default" : "outline"} size="sm" className="cursor-pointer">Text</Button>
-          <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => { setTab("image"); setError(""); setInput(""); setOutput("") }}>Image</Button>
-          <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => { setTab("file"); setError(""); setInput(""); setOutput("") }}>File</Button>
+          <Button variant={mode === "encode" && tab === "text" ? "default" : "outline"} size="sm" className="cursor-pointer">{t("tool.base64.text")}</Button>
+          <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => { setTab("image"); setError(""); setInput(""); setOutput("") }}>{t("tool.base64.image")}</Button>
+          <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => { setTab("file"); setError(""); setInput(""); setOutput("") }}>{t("tool.base64.file")}</Button>
         </div>
         <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={handleModeSwitch}>
           <ArrowDownUp className="h-3.5 w-3.5" />
-          Swap
+          {t("shared.swap")}
         </Button>
       </div>
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Input</label>
+            <label className="text-sm font-medium text-foreground">{t("shared.input")}</label>
             <Textarea
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
-              placeholder="Paste text or Base64 to encode/decode..."
+              placeholder={t("tool.base64.textPlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Output</label>
-            <ReadOnlyTextarea value={output} placeholder="Result will appear here..." />
+            <label className="text-sm font-medium text-foreground">{t("shared.output")}</label>
+            <ReadOnlyTextarea value={output} placeholder={t("shared.resultPlaceholder")} />
           </div>
         </div>
         {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
         <div className="mt-4 flex gap-2">
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy Output"}
+            {copied ? t("shared.copied") : t("shared.copyOutput")}
           </Button>
           <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("shared.clear")}
           </Button>
         </div>
       </div>
@@ -236,6 +238,7 @@ export function Base64Encoder() {
 }
 
 function FileEncode({ onError }: { onError: (err: string) => void }) {
+  const { t } = useLocale()
   const [mode, setMode] = useState<"encode" | "decode">("encode")
   const [file, setFile] = useState<File | null>(null)
   const [base64, setBase64] = useState("")
@@ -304,21 +307,21 @@ function FileEncode({ onError }: { onError: (err: string) => void }) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Button variant="default" size="sm" className="cursor-pointer">Decode</Button>
-          <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setMode("encode")}>Encode</Button>
+          <Button variant="default" size="sm" className="cursor-pointer">{t("tool.base64.decodeTab")}</Button>
+          <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setMode("encode")}>{t("tool.base64.encodeTab")}</Button>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">Base64 String</label>
+          <label className="text-sm font-medium text-foreground">{t("tool.base64.base64String")}</label>
           <Textarea
             value={decodeInput}
             onChange={(e) => setDecodeInput(e.target.value)}
-            placeholder="Paste Base64 string here (with or without data: URI prefix)..."
+            placeholder={t("tool.base64.base64Placeholder")}
             className="min-h-[120px]"
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">File Name</label>
+            <label className="text-xs text-muted-foreground">{t("tool.base64.fileName")}</label>
             <input
               type="text"
               value={decodeFileName}
@@ -327,7 +330,7 @@ function FileEncode({ onError }: { onError: (err: string) => void }) {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">MIME Type</label>
+            <label className="text-xs text-muted-foreground">{t("tool.base64.mimeType")}</label>
             <input
               type="text"
               value={decodeMime}
@@ -338,7 +341,7 @@ function FileEncode({ onError }: { onError: (err: string) => void }) {
         </div>
         <Button className="gap-1.5 cursor-pointer" onClick={decodeAndDownload}>
           <Download className="h-3.5 w-3.5" />
-          Download File
+          {t("tool.base64.downloadFile")}
         </Button>
       </div>
     )
@@ -347,8 +350,8 @@ function FileEncode({ onError }: { onError: (err: string) => void }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setMode("decode")}>Decode</Button>
-        <Button variant="default" size="sm" className="cursor-pointer">Encode</Button>
+        <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setMode("decode")}>{t("tool.base64.decodeTab")}</Button>
+        <Button variant="default" size="sm" className="cursor-pointer">{t("tool.base64.encodeTab")}</Button>
       </div>
       <div
         className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-12 transition-colors cursor-pointer ${file ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/50"}`}
@@ -360,13 +363,13 @@ function FileEncode({ onError }: { onError: (err: string) => void }) {
           <div className="flex flex-col items-center gap-2">
             <FileText className="h-8 w-8 text-primary" />
             <p className="text-sm font-medium text-foreground">{file.name}</p>
-            <p className="text-xs text-muted-foreground">{formatSize(file.size)} — {file.type || "unknown type"}</p>
+            <p className="text-xs text-muted-foreground">{formatSize(file.size)} — {file.type || t("tool.base64.fileSize")}</p>
           </div>
         ) : (
           <>
             <Upload className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Drop any file here or click to upload</p>
-            <p className="text-xs text-muted-foreground">PDF, ZIP, images, documents, binaries…</p>
+            <p className="text-sm text-muted-foreground">{t("tool.base64.dropFile")}</p>
+            <p className="text-xs text-muted-foreground">{t("tool.base64.supportedFileFormats")}</p>
           </>
         )}
         <input id="base64-file-input" type="file" className="hidden" onChange={handleUpload} />
@@ -374,17 +377,17 @@ function FileEncode({ onError }: { onError: (err: string) => void }) {
       {base64 && (
         <>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Base64 Output ({formatSize(new Blob([base64]).size)})</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.base64.base64String")} ({formatSize(new Blob([base64]).size)})</label>
             <ReadOnlyTextarea value={base64} className="min-h-[100px]" />
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(base64)}>
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "Copied!" : "Copy Base64"}
+              {copied ? t("shared.copied") : t("tool.base64.copyBase64")}
             </Button>
             <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleDownload}>
               <Download className="h-3.5 w-3.5" />
-              Download Original
+              {t("tool.base64.downloadOriginal")}
             </Button>
           </div>
         </>

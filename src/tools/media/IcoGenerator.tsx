@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
+import { useLocale } from "@/i18n/useLocale"
 import { Download, Upload, X } from "lucide-react"
 import { ErrorBanner } from "@/components/ui/error-banner"
 
@@ -50,6 +51,7 @@ function createIcoFromImage(img: HTMLImageElement): Blob {
 }
 
 export function IcoGenerator() {
+  const { t } = useLocale()
   const [previewUrl, setPreviewUrl] = useState("")
   const [icoUrl, setIcoUrl] = useState("")
   const [error, setError] = useState("")
@@ -126,7 +128,7 @@ export function IcoGenerator() {
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Source Image</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.icoGenerator.sourceImage")}</label>
             <div
               className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-12 transition-colors duration-150 cursor-pointer min-h-[240px] ${previewUrl ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/50"}`}
               onDrop={handleDrop}
@@ -146,14 +148,14 @@ export function IcoGenerator() {
               ) : (
                 <>
                   <Upload className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Drop a square image here or click to upload</p>
-                  <p className="text-xs text-muted-foreground">PNG, JPG, SVG, or WebP — 1:1 aspect ratio recommended</p>
+                  <p className="text-sm text-muted-foreground">{t("tool.icoGenerator.dropHint")}</p>
+                  <p className="text-xs text-muted-foreground">{t("tool.icoGenerator.supportedFormats")}</p>
                 </>
               )}
               <input id="ico-file-input" type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
             </div>
             <p className="text-sm text-muted-foreground">
-              Generates favicon.ico with 16×16 and 32×32 sizes.
+              {t("tool.icoGenerator.description")}
             </p>
           </div>
 
@@ -161,7 +163,7 @@ export function IcoGenerator() {
             {error && <ErrorBanner message={error} />}
             {icoUrl ? (
               <div className="flex flex-col gap-4">
-                <label className="text-sm font-medium text-foreground">Result</label>
+                <label className="text-sm font-medium text-foreground">{t("tool.icoGenerator.result")}</label>
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col items-center gap-1">
                     <img src={icoUrl} alt="16px" className="h-4 w-4 rounded border border-border" style={{ imageRendering: "pixelated" }} />
@@ -174,7 +176,7 @@ export function IcoGenerator() {
                 </div>
                 {previewUrl && (
                   <div className="flex flex-col items-start gap-2">
-                    <span className="text-xs text-muted-foreground">Preview at actual size</span>
+                    <span className="text-xs text-muted-foreground">{t("tool.icoGenerator.previewAtSize")}</span>
                     <div className="rounded-md border border-border p-4 bg-muted/50 flex items-center justify-center">
                       <img src={previewUrl} alt="Preview" className="h-16 w-16 object-contain" />
                     </div>
@@ -182,16 +184,16 @@ export function IcoGenerator() {
                 )}
                 <Button variant="outline" className="gap-1.5 cursor-pointer w-fit" onClick={handleDownload}>
                   <Download className="h-3.5 w-3.5" />
-                  Download favicon.ico
+                  {t("tool.icoGenerator.downloadIco")}
                 </Button>
               </div>
             ) : generating ? (
               <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
-                Generating...
+                {t("tool.icoGenerator.generating")}
               </div>
             ) : !error && (
               <div className="flex items-center justify-center h-[200px] rounded-md border border-dashed border-border text-sm text-muted-foreground">
-                Upload an image to generate favicon.ico
+                {t("tool.icoGenerator.emptyHint")}
               </div>
             )}
           </div>

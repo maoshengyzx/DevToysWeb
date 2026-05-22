@@ -5,6 +5,7 @@ import { Copy, Check, Trash2 } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Parser } from "node-sql-parser"
+import { useLocale } from "@/i18n/useLocale"
 
 type Lang = "java" | "kotlin" | "typescript" | "csharp" | "python" | "go"
 
@@ -361,6 +362,7 @@ const LANG_HAS_JPA: Set<Lang> = new Set(["java", "kotlin", "csharp"])
 const LANG_HAS_LOMBOK: Set<Lang> = new Set(["java"])
 
 export function SqlToEntity() {
+  const { t } = useLocale()
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
   const [error, setError] = useState("")
@@ -399,7 +401,7 @@ export function SqlToEntity() {
       <div className="flex items-center justify-between border-b border-border px-6 py-3 flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <span className="text-sm text-muted-foreground">Language:</span>
+            <span className="text-sm text-muted-foreground">{t("tool.sqlToEntity.language")}</span>
             <select
               className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
               value={lang}
@@ -418,7 +420,7 @@ export function SqlToEntity() {
                 onChange={(e) => setJpa(e.target.checked)}
                 className="rounded border-border"
               />
-              <span className="text-muted-foreground">{lang === "csharp" ? "EF Annotations" : "JPA Annotations"}</span>
+              <span className="text-muted-foreground">{lang === "csharp" ? t("tool.sqlToEntity.efAnnotations") : t("tool.sqlToEntity.jpaAnnotations")}</span>
             </label>
           )}
           {LANG_HAS_LOMBOK.has(lang) && (
@@ -429,7 +431,7 @@ export function SqlToEntity() {
                 onChange={(e) => setLombok(e.target.checked)}
                 className="rounded border-border"
               />
-              <span className="text-muted-foreground">Lombok</span>
+              <span className="text-muted-foreground">{t("tool.sqlToEntity.lombok")}</span>
             </label>
           )}
         </div>
@@ -438,36 +440,36 @@ export function SqlToEntity() {
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">SQL (CREATE TABLE)</label>
+              <label className="text-sm font-medium text-foreground">{t("tool.sqlToEntity.sqlLabel")}</label>
               <div />
             </div>
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Paste CREATE TABLE SQL here..."
+              placeholder={t("tool.sqlToEntity.sqlPlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">{LANGUAGES.find((l) => l.value === lang)?.label} Entity</label>
+              <label className="text-sm font-medium text-foreground">{LANGUAGES.find((l) => l.value === lang)?.label} {t("tool.sqlToEntity.entityLabel")}</label>
               <div />
             </div>
-            <ReadOnlyTextarea value={output} placeholder="Generated entity class will appear here..." />
+            <ReadOnlyTextarea value={output} placeholder={t("tool.sqlToEntity.resultPlaceholder")} />
           </div>
         </div>
         {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
         <div className="mt-4 flex gap-2">
-          <Button className="cursor-pointer" onClick={handleConvert}>Convert</Button>
+          <Button className="cursor-pointer" onClick={handleConvert}>{t("shared.convert")}</Button>
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)} disabled={!output}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy Output"}
+            {copied ? t("shared.copied") : t("shared.copyOutput")}
           </Button>
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={loadExample}>
-            Load Example
+            {t("tool.sqlToEntity.loadExample")}
           </Button>
           <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("shared.clear")}
           </Button>
         </div>
       </div>

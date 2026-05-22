@@ -2,90 +2,11 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Copy, Check } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { useLocale } from "@/i18n/useLocale"
 
 type Category = "length" | "weight" | "temperature" | "area" | "volume" | "speed" | "data"
 
 type UnitDef = { label: string; value: number; isBase?: boolean }
-
-const units: Record<Category, { name: string; units: UnitDef[] }> = {
-  length: {
-    name: "Length",
-    units: [
-      { label: "Millimeter (mm)", value: 0.001 },
-      { label: "Centimeter (cm)", value: 0.01 },
-      { label: "Meter (m)", value: 1, isBase: true },
-      { label: "Kilometer (km)", value: 1000 },
-      { label: "Inch (in)", value: 0.0254 },
-      { label: "Foot (ft)", value: 0.3048 },
-      { label: "Yard (yd)", value: 0.9144 },
-      { label: "Mile (mi)", value: 1609.344 },
-      { label: "Nautical Mile", value: 1852 },
-    ],
-  },
-  weight: {
-    name: "Weight",
-    units: [
-      { label: "Milligram (mg)", value: 0.000001 },
-      { label: "Gram (g)", value: 0.001 },
-      { label: "Kilogram (kg)", value: 1, isBase: true },
-      { label: "Metric Ton (t)", value: 1000 },
-      { label: "Ounce (oz)", value: 0.0283495 },
-      { label: "Pound (lb)", value: 0.453592 },
-    ],
-  },
-  temperature: {
-    name: "Temperature",
-    units: [
-      { label: "Celsius (°C)", value: 1, isBase: true },
-      { label: "Fahrenheit (°F)", value: 1 },
-      { label: "Kelvin (K)", value: 1 },
-    ],
-  },
-  area: {
-    name: "Area",
-    units: [
-      { label: "mm²", value: 0.000001 },
-      { label: "cm²", value: 0.0001 },
-      { label: "m²", value: 1, isBase: true },
-      { label: "km²", value: 1000000 },
-      { label: "Hectare", value: 10000 },
-      { label: "Acre", value: 4046.86 },
-      { label: "sqft", value: 0.092903 },
-    ],
-  },
-  volume: {
-    name: "Volume",
-    units: [
-      { label: "Milliliter (mL)", value: 0.001 },
-      { label: "Liter (L)", value: 1, isBase: true },
-      { label: "US Gallon", value: 3.78541 },
-      { label: "UK Gallon", value: 4.54609 },
-      { label: "Cubic Meter (m³)", value: 1000 },
-      { label: "Cup (US)", value: 0.236588 },
-    ],
-  },
-  speed: {
-    name: "Speed",
-    units: [
-      { label: "m/s", value: 1, isBase: true },
-      { label: "km/h", value: 0.277778 },
-      { label: "mph", value: 0.44704 },
-      { label: "knot", value: 0.514444 },
-      { label: "ft/s", value: 0.3048 },
-    ],
-  },
-  data: {
-    name: "Digital Storage",
-    units: [
-      { label: "Bit", value: 0.125 },
-      { label: "Byte (B)", value: 1, isBase: true },
-      { label: "Kilobyte (KB)", value: 1024 },
-      { label: "Megabyte (MB)", value: 1048576 },
-      { label: "Gigabyte (GB)", value: 1073741824 },
-      { label: "Terabyte (TB)", value: 1099511627776 },
-    ],
-  },
-}
 
 function convertTemperature(value: number, from: string, to: string): number {
   let celsius: number
@@ -104,23 +25,105 @@ function formatNumber(n: number): string {
   return parseFloat(n.toPrecision(10)).toString()
 }
 
-function doConvert(val: string, from: number, to: number, catKey: Category): string {
-  const num = parseFloat(val)
-  if (isNaN(num)) return ""
+export function UnitConverter() {
+  const { t } = useLocale()
 
-  const fromDef = units[catKey].units[from]
-  const toDef = units[catKey].units[to]
+  const units: Record<Category, { name: string; units: UnitDef[] }> = {
+    length: {
+      name: t("tool.unitConverter.catLength"),
+      units: [
+        { label: "Millimeter (mm)", value: 0.001 },
+        { label: "Centimeter (cm)", value: 0.01 },
+        { label: "Meter (m)", value: 1, isBase: true },
+        { label: "Kilometer (km)", value: 1000 },
+        { label: "Inch (in)", value: 0.0254 },
+        { label: "Foot (ft)", value: 0.3048 },
+        { label: "Yard (yd)", value: 0.9144 },
+        { label: "Mile (mi)", value: 1609.344 },
+        { label: "Nautical Mile", value: 1852 },
+      ],
+    },
+    weight: {
+      name: t("tool.unitConverter.catWeight"),
+      units: [
+        { label: "Milligram (mg)", value: 0.000001 },
+        { label: "Gram (g)", value: 0.001 },
+        { label: "Kilogram (kg)", value: 1, isBase: true },
+        { label: "Metric Ton (t)", value: 1000 },
+        { label: "Ounce (oz)", value: 0.0283495 },
+        { label: "Pound (lb)", value: 0.453592 },
+      ],
+    },
+    temperature: {
+      name: t("tool.unitConverter.catTemperature"),
+      units: [
+        { label: "Celsius (°C)", value: 1, isBase: true },
+        { label: "Fahrenheit (°F)", value: 1 },
+        { label: "Kelvin (K)", value: 1 },
+      ],
+    },
+    area: {
+      name: t("tool.unitConverter.catArea"),
+      units: [
+        { label: "mm²", value: 0.000001 },
+        { label: "cm²", value: 0.0001 },
+        { label: "m²", value: 1, isBase: true },
+        { label: "km²", value: 1000000 },
+        { label: "Hectare", value: 10000 },
+        { label: "Acre", value: 4046.86 },
+        { label: "sqft", value: 0.092903 },
+      ],
+    },
+    volume: {
+      name: t("tool.unitConverter.catVolume"),
+      units: [
+        { label: "Milliliter (mL)", value: 0.001 },
+        { label: "Liter (L)", value: 1, isBase: true },
+        { label: "US Gallon", value: 3.78541 },
+        { label: "UK Gallon", value: 4.54609 },
+        { label: "Cubic Meter (m³)", value: 1000 },
+        { label: "Cup (US)", value: 0.236588 },
+      ],
+    },
+    speed: {
+      name: t("tool.unitConverter.catSpeed"),
+      units: [
+        { label: "m/s", value: 1, isBase: true },
+        { label: "km/h", value: 0.277778 },
+        { label: "mph", value: 0.44704 },
+        { label: "knot", value: 0.514444 },
+        { label: "ft/s", value: 0.3048 },
+      ],
+    },
+    data: {
+      name: t("tool.unitConverter.catData"),
+      units: [
+        { label: "Bit", value: 0.125 },
+        { label: "Byte (B)", value: 1, isBase: true },
+        { label: "Kilobyte (KB)", value: 1024 },
+        { label: "Megabyte (MB)", value: 1048576 },
+        { label: "Gigabyte (GB)", value: 1073741824 },
+        { label: "Terabyte (TB)", value: 1099511627776 },
+      ],
+    },
+  }
 
-  if (catKey === "temperature") {
-    const result = convertTemperature(num, fromDef.label, toDef.label)
+  function doConvert(val: string, from: number, to: number, catKey: Category): string {
+    const num = parseFloat(val)
+    if (isNaN(num)) return ""
+
+    const fromDef = units[catKey].units[from]
+    const toDef = units[catKey].units[to]
+
+    if (catKey === "temperature") {
+      const result = convertTemperature(num, fromDef.label, toDef.label)
+      return formatNumber(result)
+    }
+    const baseValue = num * fromDef.value
+    const result = baseValue / toDef.value
     return formatNumber(result)
   }
-  const baseValue = num * fromDef.value
-  const result = baseValue / toDef.value
-  return formatNumber(result)
-}
 
-export function UnitConverter() {
   const [category, setCategory] = useState<Category>("length")
   const [fromUnit, setFromUnit] = useState(2)
   const [fromValue, setFromValue] = useState("1")
@@ -147,7 +150,7 @@ export function UnitConverter() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-border px-6 py-3 flex-wrap">
-        <span className="text-sm text-muted-foreground">Category:</span>
+        <span className="text-sm text-muted-foreground">{t("tool.unitConverter.category")}</span>
         {Object.entries(units).map(([key, val]) => (
           <Button
             key={key}
@@ -164,18 +167,18 @@ export function UnitConverter() {
         <div className="grid gap-6 md:grid-cols-2 items-start">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">Value</label>
+              <label className="text-sm font-medium text-foreground">{t("tool.unitConverter.value")}</label>
               <input
                 type="text"
                 inputMode="decimal"
                 value={fromValue}
                 onChange={(e) => setFromValue(e.target.value)}
                 className="h-9 w-full rounded-md border border-input bg-background px-3 font-mono text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                placeholder="Enter a number..."
+                placeholder={t("tool.unitConverter.enterNumber")}
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">From</label>
+              <label className="text-sm font-medium text-foreground">{t("tool.unitConverter.from")}</label>
               <select
                 value={fromUnit}
                 onChange={(e) => handleFromUnitChange(Number(e.target.value))}
@@ -189,7 +192,7 @@ export function UnitConverter() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Conversions</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.unitConverter.conversions")}</label>
             <div className="flex flex-col gap-1.5">
               {cat.units.map((u, i) => {
                 const result = !isNaN(num) && fromValue.trim()

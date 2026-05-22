@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useLocale } from "@/i18n/useLocale"
 import { Textarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 import { Copy, Check } from "lucide-react"
@@ -18,6 +19,7 @@ async function hashText(text: string, algo: Algorithm): Promise<string> {
 }
 
 export function HashGenerator() {
+  const { t } = useLocale()
   const [input, setInput] = useState("")
   const [results, setResults] = useState<Record<string, string>>({})
   const [copied, handleCopy] = useCopyToClipboard()
@@ -39,11 +41,11 @@ export function HashGenerator() {
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">Input</label>
+              <label className="text-sm font-medium text-foreground">{t("tool.hash.input")}</label>
               <Textarea
                 value={input}
                 onChange={(e) => handleInputChange(e.target.value)}
-                placeholder="Type or paste text to hash..."
+                placeholder={t("tool.hash.placeholder")}
               />
             </div>
             <div className="flex flex-col gap-3">
@@ -66,7 +68,7 @@ export function HashGenerator() {
               ))}
               {!input && (
                 <div className="flex items-center justify-center min-h-[200px] rounded-md border border-dashed border-border text-sm text-muted-foreground">
-                  Type text on the left to see hashes
+                  {t("tool.hash.emptyHint")}
                 </div>
               )}
             </div>

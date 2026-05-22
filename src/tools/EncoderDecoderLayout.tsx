@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Copy, Check, Trash2, ArrowDownUp } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { useLocale } from "@/i18n/useLocale"
 
 interface EncoderDecoderProps {
   encode: (input: string) => string
@@ -18,8 +19,9 @@ export function EncoderDecoder({
   decode,
   encodeLabel,
   decodeLabel,
-  inputPlaceholder = "Paste or type your input here...",
+  inputPlaceholder,
 }: EncoderDecoderProps) {
+  const { t } = useLocale()
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
   const [mode, setMode] = useState<"encode" | "decode">("encode")
@@ -98,33 +100,33 @@ export function EncoderDecoder({
         </div>
         <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={handleModeSwitch}>
           <ArrowDownUp className="h-3.5 w-3.5" />
-          Swap
+          {t("shared.swap")}
         </Button>
       </div>
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Input</label>
+            <label className="text-sm font-medium text-foreground">{t("shared.input")}</label>
             <Textarea
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
-              placeholder={inputPlaceholder}
+              placeholder={inputPlaceholder ?? t("shared.codePlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Output</label>
-            <ReadOnlyTextarea value={output} placeholder="Result will appear here..." />
+            <label className="text-sm font-medium text-foreground">{t("shared.output")}</label>
+            <ReadOnlyTextarea value={output} placeholder={t("shared.resultPlaceholder")} />
           </div>
         </div>
         {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
         <div className="mt-4 flex gap-2">
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy Output"}
+            {copied ? t("shared.copied") : t("shared.copyOutput")}
           </Button>
           <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("shared.clear")}
           </Button>
         </div>
       </div>

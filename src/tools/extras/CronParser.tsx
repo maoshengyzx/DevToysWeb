@@ -4,14 +4,16 @@ import { CronExpressionParser } from "cron-parser"
 import cronstrue from "cronstrue"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { useLocale } from "@/i18n/useLocale"
+import type { TranslationKey } from "@/i18n/locales"
 
 const PRESETS = [
-  { label: "Every minute", cron: "* * * * *" },
-  { label: "Every 5 minutes", cron: "*/5 * * * *" },
-  { label: "Every hour", cron: "0 * * * *" },
-  { label: "Every day at midnight", cron: "0 0 * * *" },
-  { label: "Every Monday at 9am", cron: "0 9 * * 1" },
-  { label: "Every month on the 1st", cron: "0 0 1 * *" },
+  { label: "tool.cronParser.everyMinute", cron: "* * * * *" },
+  { label: "tool.cronParser.every5Min", cron: "*/5 * * * *" },
+  { label: "tool.cronParser.everyHour", cron: "0 * * * *" },
+  { label: "tool.cronParser.everyDayMidnight", cron: "0 0 * * *" },
+  { label: "tool.cronParser.everyMonday9am", cron: "0 9 * * 1" },
+  { label: "tool.cronParser.everyMonth1st", cron: "0 0 1 * *" },
 ]
 
 const MINUTE_OPTIONS = [
@@ -125,6 +127,7 @@ function CronFieldSelect({
 }
 
 function CronGenerator({ onGenerate }: { onGenerate: (cron: string) => void }) {
+  const { t } = useLocale()
   const [minute, setMinute] = useState("*")
   const [hour, setHour] = useState("*")
   const [dom, setDom] = useState("*")
@@ -136,25 +139,25 @@ function CronGenerator({ onGenerate }: { onGenerate: (cron: string) => void }) {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <CronFieldSelect label="Minute" fieldDesc="(0-59)" options={MINUTE_OPTIONS} value={minute} onChange={setMinute} />
-        <CronFieldSelect label="Hour" fieldDesc="(0-23)" options={HOUR_OPTIONS} value={hour} onChange={setHour} />
-        <CronFieldSelect label="Day of Month" fieldDesc="(1-31)" options={DOM_OPTIONS} value={dom} onChange={setDom} />
-        <CronFieldSelect label="Month" fieldDesc="(1-12)" options={MONTH_OPTIONS} value={month} onChange={setMonth} />
-        <CronFieldSelect label="Day of Week" fieldDesc="(0-6, Sun=0)" options={DOW_OPTIONS} value={dow} onChange={setDow} />
+        <CronFieldSelect label={t("tool.cronParser.minute")} fieldDesc="(0-59)" options={MINUTE_OPTIONS} value={minute} onChange={setMinute} />
+        <CronFieldSelect label={t("tool.cronParser.hour")} fieldDesc="(0-23)" options={HOUR_OPTIONS} value={hour} onChange={setHour} />
+        <CronFieldSelect label={t("tool.cronParser.dayOfMonth")} fieldDesc="(1-31)" options={DOM_OPTIONS} value={dom} onChange={setDom} />
+        <CronFieldSelect label={t("tool.cronParser.month")} fieldDesc="(1-12)" options={MONTH_OPTIONS} value={month} onChange={setMonth} />
+        <CronFieldSelect label={t("tool.cronParser.dayOfWeek")} fieldDesc="(0-6, Sun=0)" options={DOW_OPTIONS} value={dow} onChange={setDow} />
       </div>
 
       <div className="rounded-md border border-border bg-muted px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Generated Expression</p>
+            <p className="text-xs text-muted-foreground mb-1">{t("tool.cronParser.generatedExpression")}</p>
             <p className="font-mono text-lg text-foreground">{generated}</p>
           </div>
-          <Button size="sm" onClick={() => onGenerate(generated)}>Use This</Button>
+          <Button size="sm" onClick={() => onGenerate(generated)}>{t("tool.cronParser.useThis")}</Button>
         </div>
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-foreground">Quick Presets</label>
+        <label className="text-sm font-medium text-foreground">{t("tool.cronParser.quickPresets")}</label>
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((preset) => (
             <Button
@@ -171,7 +174,7 @@ function CronGenerator({ onGenerate }: { onGenerate: (cron: string) => void }) {
                 setDow(parts[4] ?? "*")
               }}
             >
-              {preset.label}
+              {t(preset.label as TranslationKey)}
             </Button>
           ))}
         </div>
@@ -181,6 +184,7 @@ function CronGenerator({ onGenerate }: { onGenerate: (cron: string) => void }) {
 }
 
 function CronResult({ cron, onSetCron }: { cron: string; onSetCron: (c: string) => void }) {
+  const { t } = useLocale()
   const [, copy] = useCopyToClipboard()
 
   const description = useMemo(() => {
@@ -222,14 +226,14 @@ function CronResult({ cron, onSetCron }: { cron: string; onSetCron: (c: string) 
 
       {description && !error && (
         <div className="rounded-md border border-border bg-muted px-4 py-3">
-          <p className="text-xs text-muted-foreground mb-1">Human-readable</p>
+          <p className="text-xs text-muted-foreground mb-1">{t("tool.cronParser.humanReadable")}</p>
           <p className="text-sm text-foreground">{description}</p>
         </div>
       )}
 
       {cron.trim() && (
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">Field Reference</label>
+          <label className="text-sm font-medium text-foreground">{t("tool.cronParser.fieldReference")}</label>
           <div className="space-y-1 text-xs font-mono text-muted-foreground">
             <p>┌───────────── minute (0-59)</p>
             <p>│ ┌───────────── hour (0-23)</p>
@@ -245,17 +249,17 @@ function CronResult({ cron, onSetCron }: { cron: string; onSetCron: (c: string) 
       {!error && times.length > 0 && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-foreground">Next 5 Occurrences</label>
-            <Button variant="ghost" size="sm" className="cursor-pointer" onClick={() => copy(times.map((t) => t.toISOString()).join("\n"))}>
-              Copy all
+            <label className="text-sm font-medium text-foreground">{t("tool.cronParser.nextOccurrences")}</label>
+            <Button variant="ghost" size="sm" className="cursor-pointer" onClick={() => copy(times.map((d) => d.toISOString()).join("\n"))}>
+              {t("tool.cronParser.copyAll")}
             </Button>
           </div>
           <div className="space-y-1">
-            {times.map((t: Date, i: number) => (
+            {times.map((d: Date, i: number) => (
               <div key={i} className="flex items-center justify-between text-sm font-mono text-foreground">
-                <span>{t.toLocaleString()}</span>
-                <Button variant="ghost" size="sm" className="cursor-pointer" onClick={() => copy(t.toISOString())}>
-                  Copy
+                <span>{d.toLocaleString()}</span>
+                <Button variant="ghost" size="sm" className="cursor-pointer" onClick={() => copy(d.toISOString())}>
+                  {t("shared.copy")}
                 </Button>
               </div>
             ))}
@@ -264,7 +268,7 @@ function CronResult({ cron, onSetCron }: { cron: string; onSetCron: (c: string) 
       )}
 
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-foreground">Common Presets</label>
+        <label className="text-sm font-medium text-foreground">{t("tool.cronParser.commonPresets")}</label>
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((preset) => (
             <Button
@@ -274,7 +278,7 @@ function CronResult({ cron, onSetCron }: { cron: string; onSetCron: (c: string) 
               className="cursor-pointer"
               onClick={() => onSetCron(preset.cron)}
             >
-              {preset.label}
+              {t(preset.label as TranslationKey)}
             </Button>
           ))}
         </div>
@@ -284,6 +288,7 @@ function CronResult({ cron, onSetCron }: { cron: string; onSetCron: (c: string) 
 }
 
 export function CronParser() {
+  const { t } = useLocale()
   const [tab, setTab] = useState<Tab>("parse")
   const [cron, setCron] = useState("0 9 * * 1")
 
@@ -298,7 +303,7 @@ export function CronParser() {
               }`}
               onClick={() => setTab("parse")}
             >
-              Parse
+              {t("tool.cronParser.parse")}
             </button>
             <button
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150 cursor-pointer ${
@@ -306,7 +311,7 @@ export function CronParser() {
               }`}
               onClick={() => setTab("generate")}
             >
-              Generate
+              {t("tool.cronParser.generate")}
             </button>
           </div>
 

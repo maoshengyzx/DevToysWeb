@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
+import { useLocale } from "@/i18n/useLocale"
 import { Textarea, ReadOnlyTextarea } from "@/components/ui/shared"
 import { Download, Upload, X } from "lucide-react"
 import { ErrorBanner } from "@/components/ui/error-banner"
@@ -7,6 +8,7 @@ import { ErrorBanner } from "@/components/ui/error-banner"
 type OutputFormat = "png" | "jpeg" | "webp"
 
 export function SvgConverter() {
+  const { t } = useLocale()
   const [mode, setMode] = useState<"codeToImage" | "imageToCode">("codeToImage")
   const [svgCode, setSvgCode] = useState("")
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("png")
@@ -42,7 +44,7 @@ export function SvgConverter() {
       URL.revokeObjectURL(url)
     }
     img.onerror = () => {
-      setError("Invalid SVG code")
+      setError(t("tool.svgConverter.invalidSvg"))
       URL.revokeObjectURL(url)
     }
     img.src = url
@@ -133,22 +135,22 @@ export function SvgConverter() {
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-border px-6 py-3">
         <Button variant={mode === "codeToImage" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setMode("codeToImage"); setError(""); setResultUrl(""); }}>
-          SVG → Image
+          {t("tool.svgConverter.svgToImage")}
         </Button>
         <Button variant={mode === "imageToCode" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setMode("imageToCode"); setError(""); setDecodedCode(""); setPreviewUrl(""); }}>
-          Image → SVG
+          {t("tool.svgConverter.imageToSvg")}
         </Button>
       </div>
       <div className="flex-1 overflow-auto p-6">
         {mode === "codeToImage" ? (
           <div className="max-w-4xl mx-auto space-y-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">SVG Code</label>
-              <Textarea value={svgCode} onChange={(e) => setSvgCode(e.target.value)} placeholder='<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">...</svg>' className="min-h-[200px]" />
+              <label className="text-sm font-medium text-foreground">{t("tool.svgConverter.svgCode")}</label>
+              <Textarea value={svgCode} onChange={(e) => setSvgCode(e.target.value)} placeholder={t("tool.svgConverter.svgPlaceholder")} className="min-h-[200px]" />
             </div>
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Format:</span>
+                <span className="text-sm text-muted-foreground">{t("tool.svgConverter.format")}</span>
                 {(["png", "jpeg", "webp"] as OutputFormat[]).map((f) => (
                   <Button key={f} variant={outputFormat === f ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => setOutputFormat(f)}>
                     {f.toUpperCase()}
@@ -156,7 +158,7 @@ export function SvgConverter() {
                 ))}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Scale:</span>
+                <span className="text-sm text-muted-foreground">{t("tool.svgConverter.scale")}</span>
                 <select value={scale} onChange={(e) => setScale(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground cursor-pointer">
                   <option value={1}>1×</option>
                   <option value={2}>2×</option>
@@ -165,15 +167,15 @@ export function SvgConverter() {
                 </select>
               </div>
             </div>
-            <Button className="cursor-pointer" onClick={handleCodeToImage}>Convert to Image</Button>
+            <Button className="cursor-pointer" onClick={handleCodeToImage}>{t("tool.svgConverter.convertToImage")}</Button>
             {error && <ErrorBanner message={error} />}
             {resultUrl && (
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-foreground">Result</label>
+                <label className="text-sm font-medium text-foreground">{t("tool.svgConverter.convertResult")}</label>
                 <img src={resultUrl} alt="Converted" className="max-h-[300px] rounded-md border border-border object-contain" />
                 <Button variant="outline" className="gap-1.5 cursor-pointer w-fit" onClick={handleDownload}>
                   <Download className="h-3.5 w-3.5" />
-                  Download {outputFormat.toUpperCase()}
+                  {t("shared.download")}
                 </Button>
               </div>
             )}
@@ -199,8 +201,8 @@ export function SvgConverter() {
               ) : (
                 <>
                   <Upload className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Drop an image here or click to upload</p>
-                  <p className="text-xs text-muted-foreground">PNG, JPG, SVG, or WebP</p>
+                  <p className="text-sm text-muted-foreground">{t("tool.svgConverter.dropImage")}</p>
+                  <p className="text-xs text-muted-foreground">{t("tool.svgConverter.supportedFormats")}</p>
                 </>
               )}
               <input id="svg-image-input" type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
@@ -214,7 +216,7 @@ export function SvgConverter() {
                 <ReadOnlyTextarea value={decodedCode} className="min-h-[150px]" />
                 <Button variant="outline" className="gap-1.5 cursor-pointer w-fit" onClick={handleDownloadSvg}>
                   <Download className="h-3.5 w-3.5" />
-                  Download SVG
+                  {t("tool.svgConverter.downloadSvg")}
                 </Button>
               </div>
             )}

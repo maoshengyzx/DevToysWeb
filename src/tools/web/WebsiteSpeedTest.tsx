@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { useLocale } from "@/i18n/useLocale"
 
 interface SpeedResult {
   url: string
@@ -22,6 +23,7 @@ export function WebsiteSpeedTest() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<SpeedResult | null>(null)
   const [error, setError] = useState("")
+  const { t } = useLocale()
 
   const handleTest = async () => {
     let testUrl = url.trim()
@@ -78,9 +80,9 @@ export function WebsiteSpeedTest() {
   }
 
   const getRating = (ms: number) => {
-    if (ms < 500) return { label: "Fast", color: "text-green-500" }
-    if (ms < 2000) return { label: "Moderate", color: "text-yellow-500" }
-    return { label: "Slow", color: "text-red-500" }
+    if (ms < 500) return { label: t("tool.siteSpeed.fast"), color: "text-green-500" }
+    if (ms < 2000) return { label: t("tool.siteSpeed.moderate"), color: "text-yellow-500" }
+    return { label: t("tool.siteSpeed.slow"), color: "text-red-500" }
   }
 
   return (
@@ -93,17 +95,17 @@ export function WebsiteSpeedTest() {
               inputMode="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com"
+              placeholder={t("tool.siteSpeed.urlPlaceholder")}
               className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               onKeyDown={(e) => e.key === "Enter" && handleTest()}
             />
             <Button className="cursor-pointer" onClick={handleTest} disabled={loading}>
-              {loading ? "Testing..." : "Test"}
+              {loading ? t("tool.siteSpeed.testing") : t("tool.siteSpeed.test")}
             </Button>
           </div>
 
           <div className="rounded-md border border-border bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
-            ⚡ Tests are performed via CORS proxy. Results include proxy overhead and may vary from real-world performance.
+            ⚡ {t("tool.siteSpeed.proxyNotice")}
           </div>
 
           {error && <ErrorBanner message={error} />}
@@ -118,17 +120,17 @@ export function WebsiteSpeedTest() {
                   <div className={`text-sm font-medium ${getRating(result.totalTime).color}`}>
                     {getRating(result.totalTime).label}
                   </div>
-                  <div className="text-xs text-muted-foreground">Response Time (via proxy)</div>
+                  <div className="text-xs text-muted-foreground">{t("tool.siteSpeed.responseTime")}</div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: "Status", value: result.statusCode > 0 ? `${result.statusCode}` : "N/A" },
-                  { label: "Size", value: formatSize(result.size) },
-                  { label: "Content-Type", value: result.contentType || "N/A" },
-                  { label: "Server", value: result.server || "N/A" },
-                  { label: "URL", value: result.url },
+                  { label: t("tool.siteSpeed.status"), value: result.statusCode > 0 ? `${result.statusCode}` : "N/A" },
+                  { label: t("tool.siteSpeed.size"), value: formatSize(result.size) },
+                  { label: t("tool.siteSpeed.contentType"), value: result.contentType || "N/A" },
+                  { label: t("tool.siteSpeed.server"), value: result.server || "N/A" },
+                  { label: t("tool.siteSpeed.url"), value: result.url },
                 ].map((item) => (
                   <div key={item.label} className="rounded-md border border-border px-3 py-2">
                     <div className="text-xs text-muted-foreground">{item.label}</div>
@@ -138,7 +140,7 @@ export function WebsiteSpeedTest() {
               </div>
 
               <details className="rounded-md border border-border">
-                <summary className="cursor-pointer px-3 py-2 text-xs text-muted-foreground hover:text-foreground">Proxy Response Headers</summary>
+                <summary className="cursor-pointer px-3 py-2 text-xs text-muted-foreground hover:text-foreground">{t("tool.siteSpeed.proxyHeaders")}</summary>
                 <div className="px-3 pb-2 space-y-1">
                   {Object.entries(result.responseHeaders).map(([key, val]) => (
                     <div key={key} className="text-xs font-mono">
@@ -152,7 +154,7 @@ export function WebsiteSpeedTest() {
 
           {!result && !error && !loading && (
             <div className="flex h-40 items-center justify-center text-muted-foreground text-sm">
-              Enter a URL and click Test to measure response time
+              {t("tool.siteSpeed.emptyHint")}
             </div>
           )}
         </div>

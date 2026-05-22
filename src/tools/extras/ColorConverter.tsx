@@ -5,6 +5,7 @@ import { Copy, Check } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { colord, extend } from "colord"
 import namesPlugin from "colord/plugins/names"
+import { useLocale } from "@/i18n/useLocale"
 
 extend([namesPlugin])
 
@@ -15,6 +16,7 @@ export function ColorConverter() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [, handleCopyBase] = useCopyToClipboard()
   const [previewColor, setPreviewColor] = useState("#6366f1")
+  const { t } = useLocale()
 
   const handleCopy = async (value: string, label: string) => {
     await handleCopyBase(value)
@@ -87,32 +89,32 @@ export function ColorConverter() {
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-foreground">HEX</label>
+                  <label className="text-sm font-medium text-foreground">{t("tool.colorConverter.hex")}</label>
                   <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(hex, "hex")}>
                     {copiedKey === "hex" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                   </Button>
                 </div>
-                <Input value={hex} onChange={(e) => handleHexChange(e.target.value)} placeholder="#6366f1" />
+                <Input value={hex} onChange={(e) => handleHexChange(e.target.value)} placeholder={t("tool.colorConverter.hexPlaceholder")} />
               </div>
 
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-foreground">RGB</label>
+                  <label className="text-sm font-medium text-foreground">{t("tool.colorConverter.rgb")}</label>
                   <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(`rgb(${rgb})`, "rgb")}>
                     {copiedKey === "rgb" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                   </Button>
                 </div>
-                <Input value={rgb} onChange={(e) => handleRgbChange(e.target.value)} placeholder="99, 102, 241" />
+                <Input value={rgb} onChange={(e) => handleRgbChange(e.target.value)} placeholder={t("tool.colorConverter.rgbPlaceholder")} />
               </div>
 
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-foreground">HSL</label>
+                  <label className="text-sm font-medium text-foreground">{t("tool.colorConverter.hsl")}</label>
                   <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(`hsl(${hsl})`, "hsl")}>
                     {copiedKey === "hsl" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                   </Button>
                 </div>
-                <Input value={hsl} onChange={(e) => handleHslChange(e.target.value)} placeholder="239, 84%, 67%" />
+                <Input value={hsl} onChange={(e) => handleHslChange(e.target.value)} placeholder={t("tool.colorConverter.hslPlaceholder")} />
               </div>
             </div>
           </div>

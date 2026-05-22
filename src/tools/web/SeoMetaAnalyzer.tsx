@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Download, Copy, Check } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { useLocale } from "@/i18n/useLocale"
 
 const PROXIES = [
   (u: string) => ({ url: `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, parse: (d: string) => { const j = JSON.parse(d); return j.contents as string } }),
@@ -90,6 +91,7 @@ export function SeoMetaAnalyzer() {
   const [result, setResult] = useState<SeoData | null>(null)
   const [error, setError] = useState("")
   const [copied, handleCopy] = useCopyToClipboard()
+  const { t } = useLocale()
 
   const handleAnalyze = async () => {
     let analyzeUrl = url.trim()
@@ -147,12 +149,12 @@ export function SeoMetaAnalyzer() {
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com"
+              placeholder={t("tool.seoMeta.urlPlaceholder")}
               className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
             />
             <Button className="cursor-pointer" onClick={handleAnalyze} disabled={loading}>
-              {loading ? "Analyzing..." : "Analyze"}
+              {loading ? t("tool.seoMeta.analyzing") : t("tool.seoMeta.analyze")}
             </Button>
           </div>
 
@@ -164,18 +166,18 @@ export function SeoMetaAnalyzer() {
                 <div className={`text-3xl font-bold ${scoreColor(result.score)}`}>{result.score}</div>
                 <div>
                   <div className={`text-sm font-medium ${scoreColor(result.score)}`}>
-                    {result.score >= 70 ? "Good" : result.score >= 40 ? "Needs Improvement" : "Poor"} SEO Score
+                    {result.score >= 70 ? t("tool.seoMeta.good") : result.score >= 40 ? t("tool.seoMeta.needsImprovement") : t("tool.seoMeta.poor")} SEO Score
                   </div>
                   <div className="text-xs text-muted-foreground">{result.url}</div>
                 </div>
                 <div className="flex-1" />
                 <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={copyReport}>
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  Copy
+                  {t("tool.seoMeta.copy")}
                 </Button>
                 <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleDownload}>
                   <Download className="h-3.5 w-3.5" />
-                  Export
+                  {t("tool.seoMeta.export")}
                 </Button>
               </div>
 
@@ -184,14 +186,14 @@ export function SeoMetaAnalyzer() {
               </div>
 
               <div className="rounded-md border border-border p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Basic Meta</h3>
+                <h3 className="text-sm font-semibold text-foreground">{t("tool.seoMeta.basicMeta")}</h3>
                 {[
-                  { label: "Title", value: result.title, ok: !!result.title },
-                  { label: "Length", value: result.title ? `${result.title.length} chars` : "N/A", ok: result.title.length >= 10 && result.title.length <= 60 },
-                  { label: "Description", value: result.description || "Missing", ok: result.hasDescription },
-                  { label: "Desc Length", value: result.description ? `${result.description.length} chars` : "N/A", ok: result.description.length >= 50 && result.description.length <= 160 },
-                  { label: "Canonical", value: result.canonical || "Missing", ok: result.canonicalOk },
-                  { label: "Robots", value: result.robots || "Not set (default: index, follow)", ok: true },
+                  { label: t("tool.seoMeta.title"), value: result.title, ok: !!result.title },
+                  { label: t("tool.seoMeta.length"), value: result.title ? `${result.title.length} chars` : "N/A", ok: result.title.length >= 10 && result.title.length <= 60 },
+                  { label: t("tool.seoMeta.description"), value: result.description || t("tool.seoMeta.missing"), ok: result.hasDescription },
+                  { label: t("tool.seoMeta.descLength"), value: result.description ? `${result.description.length} chars` : "N/A", ok: result.description.length >= 50 && result.description.length <= 160 },
+                  { label: t("tool.seoMeta.canonical"), value: result.canonical || t("tool.seoMeta.missing"), ok: result.canonicalOk },
+                  { label: t("tool.seoMeta.robots"), value: result.robots || "Not set (default: index, follow)", ok: true },
                 ].map((item) => (
                   <div key={item.label} className="flex items-start gap-2 text-sm">
                     <span className={`w-1.5 h-1.5 mt-1.5 rounded-full shrink-0 ${item.ok ? "bg-green-500" : "bg-red-500"}`} />
@@ -202,7 +204,7 @@ export function SeoMetaAnalyzer() {
               </div>
 
               <div className="rounded-md border border-border p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Open Graph</h3>
+                <h3 className="text-sm font-semibold text-foreground">{t("tool.seoMeta.openGraph")}</h3>
                 {[
                   { label: "og:title", value: result.ogTitle },
                   { label: "og:description", value: result.ogDescription },
@@ -212,13 +214,13 @@ export function SeoMetaAnalyzer() {
                   <div key={item.label} className="flex items-start gap-2 text-sm">
                     <span className={`w-1.5 h-1.5 mt-1.5 rounded-full shrink-0 ${item.value ? "bg-green-500" : "bg-red-500"}`} />
                     <span className="text-muted-foreground w-28 shrink-0">{item.label}:</span>
-                    <span className="text-foreground break-all">{item.value || "Missing"}</span>
+                    <span className="text-foreground break-all">{item.value || t("tool.seoMeta.missing")}</span>
                   </div>
                 ))}
               </div>
 
               <div className="rounded-md border border-border p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Twitter Card</h3>
+                <h3 className="text-sm font-semibold text-foreground">{t("tool.seoMeta.twitterCard")}</h3>
                 {[
                   { label: "twitter:card", value: result.twitterCard },
                   { label: "twitter:title", value: result.twitterTitle },
@@ -227,16 +229,16 @@ export function SeoMetaAnalyzer() {
                   <div key={item.label} className="flex items-start gap-2 text-sm">
                     <span className={`w-1.5 h-1.5 mt-1.5 rounded-full shrink-0 ${item.value ? "bg-green-500" : "bg-yellow-500"}`} />
                     <span className="text-muted-foreground w-28 shrink-0">{item.label}:</span>
-                    <span className="text-foreground break-all">{item.value || "Missing"}</span>
+                    <span className="text-foreground break-all">{item.value || t("tool.seoMeta.missing")}</span>
                   </div>
                 ))}
               </div>
 
               <div className="rounded-md border border-border p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Headings</h3>
+                <h3 className="text-sm font-semibold text-foreground">{t("tool.seoMeta.headings")}</h3>
                 <div>
                   <span className="text-sm text-muted-foreground">H1 ({result.h1.length}):</span>
-                  {result.h1.length === 0 && <span className="text-sm text-red-500 ml-1">Missing</span>}
+                  {result.h1.length === 0 && <span className="text-sm text-red-500 ml-1">{t("tool.seoMeta.missing")}</span>}
                   {result.h1.length > 1 && <span className="text-sm text-yellow-500 ml-1">Multiple H1s detected</span>}
                   {result.h1.map((h, i) => (
                     <div key={i} className="text-sm text-foreground ml-4">{h}</div>
@@ -252,7 +254,7 @@ export function SeoMetaAnalyzer() {
               </div>
 
               <div className="rounded-md border border-border p-4 space-y-2">
-                <h3 className="text-sm font-semibold text-foreground">Images ({result.images.length})</h3>
+                <h3 className="text-sm font-semibold text-foreground">{t("tool.seoMeta.images")} ({result.images.length})</h3>
                 <div className="text-sm text-muted-foreground">
                   {result.images.length} images found, {result.images.filter((i) => i.alt).length} with alt text
                 </div>
@@ -264,7 +266,7 @@ export function SeoMetaAnalyzer() {
               </div>
 
               <div className="rounded-md border border-border p-4 text-sm">
-                <span className="text-muted-foreground">Links: </span>
+                <span className="text-muted-foreground">{t("tool.seoMeta.links")}: </span>
                 <span className="text-foreground">{result.links} links found</span>
               </div>
             </div>
@@ -272,7 +274,7 @@ export function SeoMetaAnalyzer() {
 
           {!result && !error && !loading && (
             <div className="flex h-40 items-center justify-center text-muted-foreground text-sm">
-              Enter a URL and click Analyze to check SEO meta tags
+              {t("tool.seoMeta.emptyHint")}
             </div>
           )}
         </div>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Copy, Check } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { useLocale } from "@/i18n/useLocale"
 
 function decodeJwt(token: string): { header: object; payload: object; error?: string } | null {
   try {
@@ -34,6 +35,7 @@ export function JwtDecoder() {
   const [verifyResult, setVerifyResult] = useState<string | null>(null)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [, handleCopyBase] = useCopyToClipboard()
+  const { t } = useLocale()
 
   const decoded = useMemo(() => {
     if (!input.trim()) return null
@@ -91,11 +93,11 @@ export function JwtDecoder() {
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6 space-y-4">
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">JWT Token</label>
+          <label className="text-sm font-medium text-foreground">{t("tool.jwtDecoder.jwtToken")}</label>
           <Textarea
             value={input}
             onChange={(e) => { setInput(e.target.value); setVerifyResult(null) }}
-            placeholder="Paste your JWT token here..."
+            placeholder={t("tool.jwtDecoder.placeholder")}
             className="min-h-[120px]"
           />
         </div>
@@ -108,10 +110,10 @@ export function JwtDecoder() {
               <>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-foreground">Header</label>
+                    <label className="text-sm font-medium text-foreground">{t("tool.jwtDecoder.header")}</label>
                     <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(JSON.stringify(decoded.header, null, 2), "header")}>
                       {copiedKey === "header" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      {copiedKey === "header" ? "Copied!" : "Copy"}
+                      {copiedKey === "header" ? t("shared.copied") : t("shared.copy")}
                     </Button>
                   </div>
                   <pre className="overflow-auto rounded-md border border-border bg-muted p-3 text-xs font-mono text-foreground">
@@ -120,10 +122,10 @@ export function JwtDecoder() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-foreground">Payload</label>
+                    <label className="text-sm font-medium text-foreground">{t("tool.jwtDecoder.payload")}</label>
                     <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(JSON.stringify(decoded.payload, null, 2), "payload")}>
                       {copiedKey === "payload" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      {copiedKey === "payload" ? "Copied!" : "Copy"}
+                      {copiedKey === "payload" ? t("shared.copied") : t("shared.copy")}
                     </Button>
                   </div>
                   <pre className="overflow-auto rounded-md border border-border bg-muted p-3 text-xs font-mono text-foreground">
@@ -131,16 +133,16 @@ export function JwtDecoder() {
                   </pre>
                 </div>
                 <details className="rounded-md border border-border">
-                  <summary className="cursor-pointer px-3 py-2 text-xs text-muted-foreground hover:text-foreground">Verify Signature (HS256/HS384/HS512)</summary>
+                  <summary className="cursor-pointer px-3 py-2 text-xs text-muted-foreground hover:text-foreground">{t("tool.jwtDecoder.verifySignature")}</summary>
                   <div className="px-3 pb-3 space-y-2">
                     <input
                       type="text"
                       value={pubKey}
                       onChange={(e) => { setPubKey(e.target.value); setVerifyResult(null) }}
-                      placeholder="Enter secret key..."
+                      placeholder={t("tool.jwtDecoder.secretKeyPlaceholder")}
                       className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     />
-                    <Button variant="outline" size="sm" className="cursor-pointer" onClick={verifySignature}>Verify</Button>
+                    <Button variant="outline" size="sm" className="cursor-pointer" onClick={verifySignature}>{t("tool.jwtDecoder.verify")}</Button>
                     {verifyResult && (
                       <p className={`text-xs ${verifyResult.includes("valid") && !verifyResult.includes("INVALID") ? "text-green-500" : "text-destructive"}`}>
                         {verifyResult}
