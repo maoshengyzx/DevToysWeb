@@ -110,7 +110,7 @@ export function DomainWhoisLookup() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6">
-        <div className="space-y-6 max-w-2xl">
+        <div className="space-y-6 max-w-3xl mx-auto">
           <div className="flex gap-2">
             <input
               type="text"

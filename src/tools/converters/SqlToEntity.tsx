@@ -397,7 +397,7 @@ export function SqlToEntity() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6">
-        <div className="space-y-6 max-w-4xl">
+        <div className="space-y-6 max-w-4xl mx-auto">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Language</label>

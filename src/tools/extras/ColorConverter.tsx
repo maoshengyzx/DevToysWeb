@@ -68,8 +68,7 @@ export function ColorConverter() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-4">
                 <div
@@ -117,7 +116,6 @@ export function ColorConverter() {
               </div>
             </div>
           </div>
-        </div>
       </div>
     </div>
   )

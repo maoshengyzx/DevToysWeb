@@ -71,51 +71,60 @@ export function QrCodeTool() {
       </div>
       <div className="flex-1 overflow-auto p-6">
         {tab === "generate" ? (
-          <div className="space-y-6 max-w-lg">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">Content</label>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Enter text or URL..."
-                className="min-h-[100px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-muted-foreground">Size</label>
-                <select value={size} onChange={(e) => setSize(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground cursor-pointer">
-                  {[128, 192, 256, 320, 384, 512].map((s) => <option key={s} value={s}>{s}px</option>)}
-                </select>
+                <label className="text-sm font-medium text-foreground">Content</label>
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Enter text or URL..."
+                  className="min-h-[100px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm text-muted-foreground">Foreground</label>
-                <input type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="h-9 w-full cursor-pointer rounded-md border border-input" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm text-muted-foreground">Background</label>
-                <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="h-9 w-full cursor-pointer rounded-md border border-input" />
-              </div>
-            </div>
-            <Button className="cursor-pointer" onClick={generateQr}>Generate QR Code</Button>
-            {qrDataUrl && (
-              <div className="flex flex-col items-center gap-4">
-                <img src={qrDataUrl} alt="QR Code" className="border border-border rounded-md" />
-                <div className="flex gap-2">
-                  <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleDownload}>
-                    <Download className="h-3.5 w-3.5" />
-                    Download PNG
-                  </Button>
-                  <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(qrDataUrl)}>
-                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                    {copied ? "Copied!" : "Copy Data URL"}
-                  </Button>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-muted-foreground">Size</label>
+                  <select value={size} onChange={(e) => setSize(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground cursor-pointer">
+                    {[128, 192, 256, 320, 384, 512].map((s) => <option key={s} value={s}>{s}px</option>)}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-muted-foreground">Foreground</label>
+                  <input type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="h-9 w-full cursor-pointer rounded-md border border-input" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-muted-foreground">Background</label>
+                  <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="h-9 w-full cursor-pointer rounded-md border border-input" />
                 </div>
               </div>
-            )}
+              <Button className="cursor-pointer" onClick={generateQr}>Generate QR Code</Button>
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
+              {qrDataUrl ? (
+                <>
+                  <img src={qrDataUrl} alt="QR Code" className="border border-border rounded-md max-h-[300px]" />
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleDownload}>
+                      <Download className="h-3.5 w-3.5" />
+                      Download PNG
+                    </Button>
+                    <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(qrDataUrl)}>
+                      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      {copied ? "Copied!" : "Copy Data URL"}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] w-full rounded-md border border-dashed border-border text-sm text-muted-foreground">
+                  Click Generate to create QR code
+                </div>
+              )}
+            </div>
           </div>
         ) : (
-          <div className="space-y-6 max-w-lg">
+          <div className="grid gap-6 md:grid-cols-2">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-foreground">Upload QR Code Image</label>
               <label className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border px-4 py-8 cursor-pointer hover:border-primary transition-colors duration-150">
@@ -124,32 +133,38 @@ export function QrCodeTool() {
                 <input type="file" accept="image/*" className="hidden" onChange={handleDecodeImage} />
               </label>
             </div>
-            <canvas ref={decodeCanvasRef} className="hidden" />
-            {decodeError && <p className="text-sm text-destructive">{decodeError}</p>}
-            {decodedText && (
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-foreground">Decoded Content</label>
-                <textarea
-                  value={decodedText}
-                  readOnly
-                  className="min-h-[100px] w-full resize-y rounded-md border border-input bg-muted px-3 py-2 font-mono text-sm text-foreground"
-                />
-                <div className="flex gap-2">
-                  <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(decodedText)}>
-                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                    {copied ? "Copied!" : "Copy"}
-                  </Button>
-                  {decodedText.startsWith("http") && (
-                    <Button variant="outline" className="cursor-pointer" onClick={() => window.open(decodedText, "_blank")}>
-                      Open URL
+            <div className="flex flex-col gap-2">
+              {decodeError && <p className="text-sm text-destructive">{decodeError}</p>}
+              {decodedText ? (
+                <>
+                  <label className="text-sm font-medium text-foreground">Decoded Content</label>
+                  <textarea
+                    value={decodedText}
+                    readOnly
+                    className="min-h-[100px] w-full resize-y rounded-md border border-input bg-muted px-3 py-2 font-mono text-sm text-foreground"
+                  />
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(decodedText)}>
+                      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      {copied ? "Copied!" : "Copy"}
                     </Button>
-                  )}
+                    {decodedText.startsWith("http") && (
+                      <Button variant="outline" className="cursor-pointer" onClick={() => window.open(decodedText, "_blank")}>
+                        Open URL
+                      </Button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-[200px] rounded-md border border-dashed border-border text-sm text-muted-foreground">
+                  Decoded content will appear here
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>
+      <canvas ref={decodeCanvasRef} className="hidden" />
     </div>
   )
 }

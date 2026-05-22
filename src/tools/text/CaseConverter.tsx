@@ -20,8 +20,7 @@ export function CaseConverter() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 items-start">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-foreground">Input</label>
               <Textarea
@@ -30,16 +29,19 @@ export function CaseConverter() {
                 placeholder="Type or paste text to convert..."
               />
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-foreground">Conversions</label>
               {input ? (
-                cases.map((c) => (
-                  <div key={c.label} className="flex items-start gap-3">
-                    <span className="w-32 shrink-0 text-sm font-medium text-muted-foreground pt-2">{c.label}</span>
-                    <code className="flex-1 rounded-md border border-border bg-muted px-3 py-2 text-sm font-mono text-foreground break-all select-all">
-                      {c.fn(input)}
-                    </code>
-                  </div>
-                ))
+                <div className="flex flex-col gap-1.5">
+                  {cases.map((c) => (
+                    <div key={c.label} className="flex items-start gap-3">
+                      <span className="w-32 shrink-0 text-xs font-medium text-muted-foreground pt-1.5">{c.label}</span>
+                      <code className="flex-1 rounded-md border border-border bg-muted px-3 py-1.5 text-sm font-mono text-foreground break-all select-all">
+                        {c.fn(input)}
+                      </code>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="flex items-center justify-center min-h-[200px] rounded-md border border-dashed border-border text-sm text-muted-foreground">
                   Type text on the left to see conversions
@@ -47,7 +49,6 @@ export function CaseConverter() {
               )}
             </div>
           </div>
-        </div>
       </div>
     </div>
   )

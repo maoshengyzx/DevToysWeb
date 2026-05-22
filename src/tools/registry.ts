@@ -7,7 +7,7 @@ import {
   Braces, Terminal, FileCode, FileJson, MessageSquare,
   Ruler, Timer, ListFilter, Calculator,
   Image, QrCode, FileImage, PenTool, ImageDown,
-  Gauge, FileSearch, SearchCode, Bot,
+  Gauge, FileSearch, SearchCode, Bot, GitCompareArrows,
 } from "lucide-react"
 
 import { NumberBaseConverter } from "./converters/NumberBaseConverter"
@@ -21,6 +21,7 @@ import { UrlEncoder } from "./encoders/UrlEncoder"
 import { Base64Encoder } from "./encoders/Base64Encoder"
 import { JwtDecoder } from "./extras/JwtDecoder"
 import { JsonFormatter } from "./formatters/JsonFormatter"
+import { JsonDiff } from "./extras/JsonDiff"
 import { SqlFormatter } from "./formatters/SqlFormatter"
 import { XmlFormatter } from "./formatters/XmlFormatter"
 import { HtmlCssJsFormatter } from "./formatters/HtmlCssJsFormatter"
@@ -90,7 +91,8 @@ export const toolCategories: ToolCategory[] = [
     title: "Formatters",
     icon: AlignLeft,
     tools: [
-      { id: "json-formatter", label: "JSON Formatter", description: "Format, minify, and validate JSON", icon: FileJson, component: JsonFormatter },
+      { id: "json-formatter", label: "JSON Formatter", description: "Format, minify, sort keys, flatten, extract structure, and more", icon: FileJson, component: JsonFormatter },
+      { id: "json-diff", label: "JSON Diff", description: "Compare two JSON objects and highlight structural differences", icon: GitCompareArrows, component: JsonDiff },
       { id: "sql-formatter", label: "SQL Formatter", description: "Format and beautify SQL statements", icon: Terminal, component: SqlFormatter },
       { id: "xml-formatter", label: "XML Formatter", description: "Format and minify XML documents", icon: FileText, component: XmlFormatter },
       { id: "html-css-js-formatter", label: "HTML/CSS/JS Formatter", description: "Format, minify, and escape HTML, CSS, JavaScript", icon: FileCode, component: HtmlCssJsFormatter },

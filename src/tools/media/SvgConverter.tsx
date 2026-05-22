@@ -141,7 +141,7 @@ export function SvgConverter() {
       </div>
       <div className="flex-1 overflow-auto p-6">
         {mode === "codeToImage" ? (
-          <div className="max-w-2xl space-y-4">
+          <div className="max-w-4xl mx-auto space-y-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-foreground">SVG Code</label>
               <Textarea value={svgCode} onChange={(e) => setSvgCode(e.target.value)} placeholder='<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">...</svg>' className="min-h-[200px]" />
@@ -179,7 +179,7 @@ export function SvgConverter() {
             )}
           </div>
         ) : (
-          <div className="max-w-2xl space-y-4">
+          <div className="max-w-4xl mx-auto space-y-4">
             <div
               className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-12 transition-colors duration-150 cursor-pointer ${previewUrl ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/50"}`}
               onDrop={handleDrop}

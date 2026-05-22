@@ -118,7 +118,7 @@ export function Base64Encoder() {
           <Button variant="default" size="sm" className="cursor-pointer">Image</Button>
         </div>
         <div className="flex-1 overflow-auto p-6">
-          <div className="max-w-3xl mx-auto space-y-4">
+          <div className="max-w-4xl mx-auto space-y-4">
             <div
               className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-12 transition-colors duration-150 cursor-pointer ${output ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/50"}`}
               onDrop={handleDrop}

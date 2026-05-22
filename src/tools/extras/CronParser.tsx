@@ -290,7 +290,7 @@ export function CronParser() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6">
-        <div className="space-y-6 max-w-4xl">
+        <div className="space-y-6 max-w-4xl mx-auto">
           <div className="flex gap-1 rounded-md border border-border p-1 bg-muted w-fit">
             <button
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150 cursor-pointer ${

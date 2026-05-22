@@ -57,25 +57,26 @@
   input[type="number"] {
     -moz-appearance: textfield;
   }
-  .sidebar-scroll {
+  * {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
   }
-  .sidebar-scroll:hover {
-    scrollbar-color: var(--color-sidebar-border) transparent;
+  *:hover {
+    scrollbar-color: var(--color-border) transparent;
   }
-  .sidebar-scroll::-webkit-scrollbar {
+  *::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
-  .sidebar-scroll::-webkit-scrollbar-track {
+  *::-webkit-scrollbar-track {
     background: transparent;
   }
-  .sidebar-scroll::-webkit-scrollbar-thumb {
+  *::-webkit-scrollbar-thumb {
     background: transparent;
     border-radius: 3px;
   }
-  .sidebar-scroll:hover::-webkit-scrollbar-thumb {
-    background: var(--color-sidebar-border);
+  *:hover::-webkit-scrollbar-thumb {
+    background: var(--color-border);
   }
 }
 

@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Copy, Check } from "lucide-react"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 
 type Category = "length" | "weight" | "temperature" | "area" | "volume" | "speed" | "data"
 
@@ -121,9 +123,8 @@ function doConvert(val: string, from: number, to: number, catKey: Category): str
 export function UnitConverter() {
   const [category, setCategory] = useState<Category>("length")
   const [fromUnit, setFromUnit] = useState(2)
-  const [toUnit, setToUnit] = useState(3)
   const [fromValue, setFromValue] = useState("1")
-  const [toValue, setToValue] = useState(() => doConvert("1", 2, 3, "length"))
+  const [copied, handleCopy] = useCopyToClipboard()
 
   const cat = units[category]
 
@@ -131,28 +132,17 @@ export function UnitConverter() {
     const newUnits = units[newCat]
     const baseIdx = newUnits.units.findIndex((u) => u.isBase)
     const from = baseIdx >= 0 ? baseIdx : 0
-    const to = from === 0 ? 1 : 0
     setCategory(newCat)
     setFromUnit(from)
-    setToUnit(to)
     setFromValue("1")
-    setToValue(doConvert("1", from, to, newCat))
-  }
-
-  const handleFromChange = (val: string) => {
-    setFromValue(val)
-    setToValue(doConvert(val, fromUnit, toUnit, category))
   }
 
   const handleFromUnitChange = (idx: number) => {
     setFromUnit(idx)
-    setToValue(doConvert(fromValue, idx, toUnit, category))
+    setFromValue(fromValue || "1")
   }
 
-  const handleToUnitChange = (idx: number) => {
-    setToUnit(idx)
-    setToValue(doConvert(fromValue, fromUnit, idx, category))
-  }
+  const num = parseFloat(fromValue)
 
   return (
     <div className="flex h-full flex-col">
@@ -171,17 +161,21 @@ export function UnitConverter() {
         ))}
       </div>
       <div className="flex-1 overflow-auto p-6">
-        <div className="space-y-6 max-w-lg">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">From</label>
-            <div className="flex gap-2">
+        <div className="grid gap-6 md:grid-cols-2 items-start">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-foreground">Value</label>
               <input
                 type="text"
                 inputMode="decimal"
                 value={fromValue}
-                onChange={(e) => handleFromChange(e.target.value)}
-                className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                onChange={(e) => setFromValue(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 font-mono text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                placeholder="Enter a number..."
               />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-foreground">From</label>
               <select
                 value={fromUnit}
                 onChange={(e) => handleFromUnitChange(Number(e.target.value))}
@@ -193,24 +187,37 @@ export function UnitConverter() {
               </select>
             </div>
           </div>
+
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">To</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={toValue}
-                readOnly
-                className="h-9 flex-1 rounded-md border border-input bg-muted px-3 text-sm text-foreground font-mono"
-              />
-              <select
-                value={toUnit}
-                onChange={(e) => handleToUnitChange(Number(e.target.value))}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
-              >
-                {cat.units.map((u, i) => (
-                  <option key={i} value={i}>{u.label}</option>
-                ))}
-              </select>
+            <label className="text-sm font-medium text-foreground">Conversions</label>
+            <div className="flex flex-col gap-1.5">
+              {cat.units.map((u, i) => {
+                const result = !isNaN(num) && fromValue.trim()
+                  ? doConvert(fromValue, fromUnit, i, category)
+                  : ""
+                const isFrom = i === fromUnit
+                return (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-2 rounded-md border px-3 py-2 ${isFrom ? "border-primary/50 bg-primary/5" : "border-border"}`}
+                  >
+                    <span className="w-40 shrink-0 text-sm text-muted-foreground truncate">{u.label}</span>
+                    <code className="flex-1 text-sm font-mono text-foreground break-all select-all">
+                      {result || "\u00A0"}
+                    </code>
+                    {result && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 h-7 w-7 cursor-pointer"
+                        onClick={() => handleCopy(result)}
+                      >
+                        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      </Button>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

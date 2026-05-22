@@ -96,7 +96,7 @@ export function HttpStatusCodeLookup() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <input
             type="text"
             value={search}

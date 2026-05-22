@@ -107,7 +107,7 @@ export function ImageCompressor() {
         )}
       </div>
       <div className="flex-1 overflow-auto p-6">
-        <div className="space-y-6 max-w-2xl">
+        <div className="space-y-6 max-w-4xl mx-auto">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-foreground">Upload Image</label>
             <label className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border px-4 py-8 cursor-pointer hover:border-primary transition-colors duration-150">
