@@ -1,7 +1,7 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
-import { Download, Copy, Check } from "lucide-react"
+import { Download, Copy, Check, LoaderCircle, Square } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { useLocale } from "@/i18n/useLocale"
 
@@ -91,7 +91,14 @@ export function SeoMetaAnalyzer() {
   const [result, setResult] = useState<SeoData | null>(null)
   const [error, setError] = useState("")
   const [copied, handleCopy] = useCopyToClipboard()
+  const abortRef = useRef<AbortController | null>(null)
   const { t } = useLocale()
+
+  const handleStop = () => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    setLoading(false)
+  }
 
   const handleAnalyze = async () => {
     let analyzeUrl = url.trim()
@@ -104,20 +111,29 @@ export function SeoMetaAnalyzer() {
     setError("")
     setResult(null)
 
+    const abortController = new AbortController()
+    abortRef.current = abortController
+
     for (const buildProxy of PROXIES) {
       try {
         const { url: proxyUrl, parse } = buildProxy(analyzeUrl)
-        const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) })
+        const res = await fetch(proxyUrl, { signal: abortController.signal })
         if (!res.ok) throw new Error(`Proxy responded with ${res.status}`)
         const raw = await res.text()
         const html = parse(raw)
         setResult(extractSeo(html, analyzeUrl))
+        setLoading(false)
         return
-      } catch {
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") {
+          setLoading(false)
+          return
+        }
         continue
       }
     }
 
+    abortRef.current = null
     setError("Unable to fetch the URL through any available proxy. The site may be unreachable or blocking proxies.")
     setLoading(false)
   }
@@ -153,12 +169,25 @@ export function SeoMetaAnalyzer() {
               className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
             />
-            <Button className="cursor-pointer" onClick={handleAnalyze} disabled={loading}>
-              {loading ? t("tool.seoMeta.analyzing") : t("tool.seoMeta.analyze")}
-            </Button>
+            {loading ? (
+              <Button variant="destructive" className="gap-1.5 cursor-pointer" onClick={handleStop}>
+                <Square className="h-3.5 w-3.5 fill-current" />
+                Stop
+              </Button>
+            ) : (
+              <Button className="cursor-pointer" onClick={handleAnalyze}>
+                {t("tool.seoMeta.analyze")}
+              </Button>
+            )}
           </div>
 
           {error && <ErrorBanner message={error} />}
+
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
 
           {result && (
             <div className="space-y-4">

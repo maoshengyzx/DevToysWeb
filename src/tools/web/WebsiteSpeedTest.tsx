@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { LoaderCircle, Square } from "lucide-react"
 import { useLocale } from "@/i18n/useLocale"
 
 interface SpeedResult {
@@ -14,6 +15,8 @@ interface SpeedResult {
 }
 
 const PROXIES = [
+  (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  (u: string) => `https://corsproxy.org/?${encodeURIComponent(u)}`,
   (u: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
   (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
 ]
@@ -23,7 +26,14 @@ export function WebsiteSpeedTest() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<SpeedResult | null>(null)
   const [error, setError] = useState("")
+  const abortRef = useRef<AbortController | null>(null)
   const { t } = useLocale()
+
+  const handleStop = () => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    setLoading(false)
+  }
 
   const handleTest = async () => {
     let testUrl = url.trim()
@@ -36,39 +46,59 @@ export function WebsiteSpeedTest() {
     setError("")
     setResult(null)
 
+    const abortController = new AbortController()
+    abortRef.current = abortController
+
     for (const buildProxy of PROXIES) {
       try {
         const proxyUrl = buildProxy(testUrl)
         const startTime = performance.now()
-        const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(20000) })
+        const res = await fetch(proxyUrl, { signal: abortController.signal })
         if (!res.ok) throw new Error(`Proxy responded with ${res.status}`)
-        const body = await res.json()
+
+        const contentType = res.headers.get("content-type") || ""
+        const isJson = contentType.includes("json")
+        const bodyText = await res.text()
 
         const totalTime = Math.round(performance.now() - startTime)
         let statusCode = 0
-        let contentType = ""
+        let bodySize = 0
         let server = ""
-        let size = 0
         const responseHeaders: Record<string, string> = {}
 
-        if (body.status) {
-          statusCode = body.status.http_code || res.status
-          contentType = body.status.content_type || ""
-          size = body.contents ? new Blob([body.contents]).size : 0
-        } else if (body.contents) {
-            statusCode = res.status
-            size = new Blob([body.contents]).size
+        if (isJson) {
+          try {
+            const parsed = JSON.parse(bodyText)
+            if (parsed.contents) {
+              bodySize = new Blob([parsed.contents]).size
+              statusCode = parsed.status?.http_code || res.status
+            }
+          } catch {
+            /* not parseable as JSON, treat as raw */
+          }
         }
+
+        if (!statusCode) {
+          statusCode = res.status
+          bodySize = new Blob([bodyText]).size
+        }
+
         res.headers.forEach((v, k) => { responseHeaders[k] = v })
         server = responseHeaders["x-cache-hits"] || responseHeaders["via"] || ""
 
-        setResult({ url: testUrl, statusCode, contentType, server, totalTime, size, responseHeaders })
+        setResult({ url: testUrl, statusCode, contentType, server, totalTime, size: bodySize, responseHeaders })
+        setLoading(false)
         return
-      } catch {
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") {
+          setLoading(false)
+          return
+        }
         continue
       }
     }
 
+    abortRef.current = null
     setError("Unable to reach the target URL through any proxy. The site may be unreachable or all proxies are unavailable.")
     setLoading(false)
   }
@@ -99,14 +129,27 @@ export function WebsiteSpeedTest() {
               className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               onKeyDown={(e) => e.key === "Enter" && handleTest()}
             />
-            <Button className="cursor-pointer" onClick={handleTest} disabled={loading}>
-              {loading ? t("tool.siteSpeed.testing") : t("tool.siteSpeed.test")}
-            </Button>
+            {loading ? (
+              <Button variant="destructive" className="gap-1.5 cursor-pointer" onClick={handleStop}>
+                <Square className="h-3.5 w-3.5 fill-current" />
+                Stop
+              </Button>
+            ) : (
+              <Button className="cursor-pointer" onClick={handleTest}>
+                {t("tool.siteSpeed.test")}
+              </Button>
+            )}
           </div>
 
           <div className="rounded-md border border-border bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
             ⚡ {t("tool.siteSpeed.proxyNotice")}
           </div>
+
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
 
           {error && <ErrorBanner message={error} />}
 
