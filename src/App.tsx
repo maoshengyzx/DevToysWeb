@@ -508,14 +508,14 @@ function App() {
             onClick={toggleLocale}
           >
             <Languages className="h-4 w-4" />
-            <span>{locale === "en" ? "中文" : "English"}</span>
+            <span>{locale === "zh" ? "中文" : "English"}</span>
           </button>
           <button
             className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors duration-150 cursor-pointer"
             onClick={toggleDarkMode}
           >
-            {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            <span>{darkMode ? t("sidebar.lightMode") : t("sidebar.darkMode")}</span>
+            {darkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            <span>{darkMode ? t("sidebar.darkMode") : t("sidebar.lightMode")}</span>
           </button>
           <a
             href="mailto:s.mao@clearvisionai.cn"

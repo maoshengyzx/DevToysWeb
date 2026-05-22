@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { Copy, Check } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
-import { useLocale } from "@/i18n/useLocale"
 
 function decodeJwt(token: string): { header: object; payload: object; error?: string } | null {
   try {
@@ -30,7 +29,6 @@ function decodeJwt(token: string): { header: object; payload: object; error?: st
 }
 
 export function JwtDecoder() {
-  const { t } = useLocale()
   const [input, setInput] = useState("")
   const [pubKey, setPubKey] = useState("")
   const [verifyResult, setVerifyResult] = useState<string | null>(null)
@@ -52,7 +50,7 @@ export function JwtDecoder() {
     if (!input.trim()) return
     const parts = input.trim().split(".")
     if (parts.length !== 3) {
-      setVerifyResult(t("jwt.invalidParts"))
+      setVerifyResult("Invalid JWT: must have 3 parts")
       return
     }
 
@@ -60,17 +58,17 @@ export function JwtDecoder() {
       const header = JSON.parse(atob(parts[0].replace(/-/g, "+").replace(/_/g, "/")))
 
       if (header.alg === "none") {
-        setVerifyResult(t("jwt.algNone"))
+        setVerifyResult("Algorithm is 'none' — signature is not present")
         return
       }
 
       if (!header.alg?.startsWith("HS")) {
-        setVerifyResult(t("jwt.algMismatch").replace("{alg}", header.alg ?? ""))
+        setVerifyResult(`Algorithm '${header.alg}' uses asymmetric keys. Paste the secret key for HS* algorithms.`)
         return
       }
 
       if (!pubKey.trim()) {
-        setVerifyResult(t("jwt.enterKey"))
+        setVerifyResult("Please enter the secret key to verify")
         return
       }
 
@@ -83,9 +81,9 @@ export function JwtDecoder() {
       const sigBytes = Uint8Array.from(sigStr, (c) => c.charCodeAt(0))
       const valid = await crypto.subtle.verify("HMAC", key, sigBytes, data)
 
-      setVerifyResult(valid ? t("jwt.signatureValid") : t("jwt.signatureInvalid"))
+      setVerifyResult(valid ? "Signature is valid" : "Signature is INVALID")
     } catch (e) {
-      setVerifyResult(t("jwt.verificationFailed").replace("{msg}", e instanceof Error ? e.message : "Unknown error"))
+      setVerifyResult(`Verification failed: ${e instanceof Error ? e.message : "Unknown error"}`)
     }
   }
 
@@ -93,11 +91,11 @@ export function JwtDecoder() {
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-6 space-y-4">
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">{t("jwt.title")}</label>
+          <label className="text-sm font-medium text-foreground">JWT Token</label>
           <Textarea
             value={input}
             onChange={(e) => { setInput(e.target.value); setVerifyResult(null) }}
-            placeholder={t("jwt.placeholder")}
+            placeholder="Paste your JWT token here..."
             className="min-h-[120px]"
           />
         </div>
@@ -110,10 +108,10 @@ export function JwtDecoder() {
               <>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-foreground">{t("jwt.header")}</label>
+                    <label className="text-sm font-medium text-foreground">Header</label>
                     <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(JSON.stringify(decoded.header, null, 2), "header")}>
                       {copiedKey === "header" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      {copiedKey === "header" ? t("common.copied") : t("common.copy")}
+                      {copiedKey === "header" ? "Copied!" : "Copy"}
                     </Button>
                   </div>
                   <pre className="overflow-auto rounded-md border border-border bg-muted p-3 text-xs font-mono text-foreground">
@@ -122,10 +120,10 @@ export function JwtDecoder() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-foreground">{t("jwt.payload")}</label>
+                    <label className="text-sm font-medium text-foreground">Payload</label>
                     <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(JSON.stringify(decoded.payload, null, 2), "payload")}>
                       {copiedKey === "payload" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      {copiedKey === "payload" ? t("common.copied") : t("common.copy")}
+                      {copiedKey === "payload" ? "Copied!" : "Copy"}
                     </Button>
                   </div>
                   <pre className="overflow-auto rounded-md border border-border bg-muted p-3 text-xs font-mono text-foreground">
@@ -133,16 +131,16 @@ export function JwtDecoder() {
                   </pre>
                 </div>
                 <details className="rounded-md border border-border">
-                  <summary className="cursor-pointer px-3 py-2 text-xs text-muted-foreground hover:text-foreground">{t("jwt.verifySection")}</summary>
+                  <summary className="cursor-pointer px-3 py-2 text-xs text-muted-foreground hover:text-foreground">Verify Signature (HS256/HS384/HS512)</summary>
                   <div className="px-3 pb-3 space-y-2">
                     <input
                       type="text"
                       value={pubKey}
                       onChange={(e) => { setPubKey(e.target.value); setVerifyResult(null) }}
-                      placeholder={t("jwt.enterKeyPlaceholder")}
+                      placeholder="Enter secret key..."
                       className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     />
-                    <Button variant="outline" size="sm" className="cursor-pointer" onClick={verifySignature}>{t("jwt.verify")}</Button>
+                    <Button variant="outline" size="sm" className="cursor-pointer" onClick={verifySignature}>Verify</Button>
                     {verifyResult && (
                       <p className={`text-xs ${verifyResult.includes("valid") && !verifyResult.includes("INVALID") ? "text-green-500" : "text-destructive"}`}>
                         {verifyResult}
