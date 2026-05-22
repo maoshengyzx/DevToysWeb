@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Copy, Check, Trash2 } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { useLocale } from "@/i18n/useLocale"
 
 interface FormatterProps {
   format: (input: string, indent?: number) => string
@@ -18,6 +19,7 @@ export function Formatter({
   inputPlaceholder = "Paste your code here...",
   indentOptions,
 }: FormatterProps) {
+  const { t } = useLocale()
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
   const [error, setError] = useState("")
@@ -35,7 +37,7 @@ export function Formatter({
       setOutput(format(value, indent))
       setError("")
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid input")
+      setError(e instanceof Error ? e.message : t("common.invalidInput"))
       setOutput("")
     }
   }
@@ -46,7 +48,7 @@ export function Formatter({
       setOutput(format(input, indent))
       setError("")
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Format failed")
+      setError(e instanceof Error ? e.message : t("common.formatFailed"))
     }
   }
 
@@ -56,7 +58,7 @@ export function Formatter({
       setOutput(minify(input))
       setError("")
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Minify failed")
+      setError(e instanceof Error ? e.message : t("common.minifyFailed"))
     }
   }
 
@@ -70,7 +72,7 @@ export function Formatter({
     <div className="flex h-full flex-col">
       {indentOptions && (
         <div className="flex items-center gap-2 border-b border-border px-6 py-3">
-          <span className="text-sm text-muted-foreground">Indent:</span>
+          <span className="text-sm text-muted-foreground">{t("common.indent")}:</span>
           <div className="flex gap-1">
             {indentOptions.map((opt) => (
               <Button
@@ -105,7 +107,7 @@ export function Formatter({
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Input</label>
+            <label className="text-sm font-medium text-foreground">{t("common.input")}</label>
             <Textarea
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
@@ -113,22 +115,22 @@ export function Formatter({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Output</label>
-            <ReadOnlyTextarea value={output} placeholder="Formatted result will appear here..." />
+            <label className="text-sm font-medium text-foreground">{t("common.output")}</label>
+            <ReadOnlyTextarea value={output} placeholder={t("common.formattedResult")} />
           </div>
         </div>
         <div className="mt-4 flex gap-2">
-          <Button className="cursor-pointer" onClick={handleFormat}>Format</Button>
+          <Button className="cursor-pointer" onClick={handleFormat}>{t("common.format")}</Button>
           {minify && (
-            <Button variant="outline" className="cursor-pointer" onClick={handleMinify}>Minify</Button>
+            <Button variant="outline" className="cursor-pointer" onClick={handleMinify}>{t("common.minify")}</Button>
           )}
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy Output"}
+            {copied ? t("common.copied") : t("common.copyOutput")}
           </Button>
           <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("common.clear")}
           </Button>
         </div>
       </div>
