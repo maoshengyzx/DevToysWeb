@@ -220,6 +220,12 @@ export function CsvToJson() {
               <span className="text-muted-foreground">Infer types</span>
             </label>
           )}
+          <div className="h-4 w-px bg-border" />
+          <input type="file" accept=".csv,.json,text/csv,application/json" className="hidden" onChange={handleFileUpload} id="csv-json-file-input" />
+          <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => document.getElementById("csv-json-file-input")?.click()}>
+            <Upload className="h-3.5 w-3.5" />
+            Upload
+          </Button>
           <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={handleSwap}>
             <ArrowDownUp className="h-3.5 w-3.5" />
             Swap
@@ -237,11 +243,7 @@ export function CsvToJson() {
               <label className="text-sm font-medium text-foreground">
                 {mode === "csvToJson" ? "CSV Input" : "JSON Input"}
               </label>
-              <input type="file" accept=".csv,.json,text/csv,application/json" className="hidden" onChange={handleFileUpload} id="csv-json-file-input" />
-              <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => document.getElementById("csv-json-file-input")?.click()}>
-                <Upload className="h-3.5 w-3.5" />
-                Upload file
-              </Button>
+              <div />
             </div>
             <Textarea
               value={input}
@@ -250,9 +252,12 @@ export function CsvToJson() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">
-              {mode === "csvToJson" ? "JSON Output" : "CSV Output"}
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-foreground">
+                {mode === "csvToJson" ? "JSON Output" : "CSV Output"}
+              </label>
+              <div />
+            </div>
             <ReadOnlyTextarea value={output} placeholder="Result will appear here..." />
           </div>
         </div>

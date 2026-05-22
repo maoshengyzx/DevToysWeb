@@ -4,6 +4,11 @@ import { ErrorBanner } from "@/components/ui/error-banner"
 import { Download, Copy, Check } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 
+const PROXIES = [
+  (u: string) => ({ url: `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, parse: (d: string) => { const j = JSON.parse(d); return j.contents as string } }),
+  (u: string) => ({ url: `https://corsproxy.io/?${encodeURIComponent(u)}`, parse: (d: string) => d }),
+]
+
 interface SeoData {
   url: string
   title: string
@@ -26,6 +31,59 @@ interface SeoData {
   score: number
 }
 
+function extractSeo(html: string, url: string): SeoData {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, "text/html")
+
+  const getMeta = (name: string) => {
+    const el = doc.querySelector(`meta[name="${name}"]`) || doc.querySelector(`meta[property="${name}"]`)
+    return el?.getAttribute("content") || ""
+  }
+
+  const title = doc.querySelector("title")?.textContent?.trim() || ""
+  const description = getMeta("description")
+  const canonical = doc.querySelector("link[rel='canonical']")?.getAttribute("href") || ""
+  const robots = getMeta("robots")
+  const ogTitle = getMeta("og:title")
+  const ogDescription = getMeta("og:description")
+  const ogImage = getMeta("og:image")
+  const ogType = getMeta("og:type")
+  const twitterCard = getMeta("twitter:card")
+  const twitterTitle = getMeta("twitter:title")
+  const twitterDescription = getMeta("twitter:description")
+  const h1 = Array.from(doc.querySelectorAll("h1")).map((el) => el.textContent?.trim() || "")
+  const h2 = Array.from(doc.querySelectorAll("h2")).map((el) => el.textContent?.trim() || "")
+  const images = Array.from(doc.querySelectorAll("img")).slice(0, 50).map((el) => ({
+    src: el.getAttribute("src") || "",
+    alt: el.getAttribute("alt") || "",
+  }))
+  const links = doc.querySelectorAll("a[href]").length
+
+  const canonicalOk = !canonical || canonical.startsWith("http")
+  const hasDescription = description.length > 0
+  let score = 0
+  if (title) score += 20
+  if (title.length >= 10 && title.length <= 60) score += 10; else if (title) score += 5
+  if (hasDescription) score += 15
+  if (description.length >= 50 && description.length <= 160) score += 10; else if (description) score += 5
+  if (canonicalOk && canonical) score += 10
+  if (ogTitle) score += 5
+  if (ogDescription) score += 5
+  if (ogImage) score += 5
+  if (h1.length === 1) score += 10
+  if (h1.length >= 1) score += 5
+  const imagesWithAlt = images.filter((img) => img.alt)
+  if (images.length > 0 && imagesWithAlt.length === images.length) score += 5
+
+  return {
+    url, title, description, canonical, robots,
+    ogTitle, ogDescription, ogImage, ogType,
+    twitterCard, twitterTitle, twitterDescription,
+    h1, h2, images, links, canonicalOk, hasDescription,
+    score: Math.min(score, 100),
+  }
+}
+
 export function SeoMetaAnalyzer() {
   const [url, setUrl] = useState("")
   const [loading, setLoading] = useState(false)
@@ -44,82 +102,22 @@ export function SeoMetaAnalyzer() {
     setError("")
     setResult(null)
 
-    try {
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(analyzeUrl)}`
-      const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) })
-      if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`)
-      const data = await response.json()
-      const html = data.contents as string
-
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(html, "text/html")
-
-      const getMeta = (name: string) => {
-        const el = doc.querySelector(`meta[name="${name}"]`) || doc.querySelector(`meta[property="${name}"]`)
-        return el?.getAttribute("content") || ""
+    for (const buildProxy of PROXIES) {
+      try {
+        const { url: proxyUrl, parse } = buildProxy(analyzeUrl)
+        const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) })
+        if (!res.ok) throw new Error(`Proxy responded with ${res.status}`)
+        const raw = await res.text()
+        const html = parse(raw)
+        setResult(extractSeo(html, analyzeUrl))
+        return
+      } catch {
+        continue
       }
-
-      const title = doc.querySelector("title")?.textContent?.trim() || ""
-      const description = getMeta("description")
-      const canonical = doc.querySelector("link[rel='canonical']")?.getAttribute("href") || ""
-      const robots = getMeta("robots")
-      const ogTitle = getMeta("og:title")
-      const ogDescription = getMeta("og:description")
-      const ogImage = getMeta("og:image")
-      const ogType = getMeta("og:type")
-      const twitterCard = getMeta("twitter:card")
-      const twitterTitle = getMeta("twitter:title")
-      const twitterDescription = getMeta("twitter:description")
-      const h1 = Array.from(doc.querySelectorAll("h1")).map((el) => el.textContent?.trim() || "")
-      const h2 = Array.from(doc.querySelectorAll("h2")).map((el) => el.textContent?.trim() || "")
-      const images = Array.from(doc.querySelectorAll("img")).slice(0, 50).map((el) => ({
-        src: el.getAttribute("src") || "",
-        alt: el.getAttribute("alt") || "",
-      }))
-      const links = doc.querySelectorAll("a[href]").length
-
-      const canonicalOk = !canonical || canonical.startsWith("http")
-      const hasDescription = description.length > 0
-      let score = 0
-      if (title) score += 20
-      if (title.length >= 10 && title.length <= 60) score += 10; else if (title) score += 5
-      if (hasDescription) score += 15
-      if (description.length >= 50 && description.length <= 160) score += 10; else if (description) score += 5
-      if (canonicalOk && canonical) score += 10
-      if (ogTitle) score += 5
-      if (ogDescription) score += 5
-      if (ogImage) score += 5
-      if (h1.length === 1) score += 10
-      if (h1.length >= 1) score += 5
-      const imagesWithAlt = images.filter((img) => img.alt)
-      if (images.length > 0 && imagesWithAlt.length === images.length) score += 5
-
-      setResult({
-        url: analyzeUrl,
-        title,
-        description,
-        canonical,
-        robots,
-        ogTitle,
-        ogDescription,
-        ogImage,
-        ogType,
-        twitterCard,
-        twitterTitle,
-        twitterDescription,
-        h1,
-        h2,
-        images,
-        links,
-        canonicalOk,
-        hasDescription,
-        score: Math.min(score, 100),
-      })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to analyze URL")
-    } finally {
-      setLoading(false)
     }
+
+    setError("Unable to fetch the URL through any available proxy. The site may be unreachable or blocking proxies.")
+    setLoading(false)
   }
 
   const scoreColor = (s: number) => (s >= 70 ? "text-green-500" : s >= 40 ? "text-yellow-500" : "text-red-500")
@@ -158,7 +156,7 @@ export function SeoMetaAnalyzer() {
             </Button>
           </div>
 
-          {error && <ErrorBanner message={`Failed to analyze: ${error}. Try a different URL or check if CORS proxy is available.`} />}
+          {error && <ErrorBanner message={error} />}
 
           {result && (
             <div className="space-y-4">

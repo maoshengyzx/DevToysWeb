@@ -189,6 +189,9 @@ function generateJava(table: Table, options: GenOptions): string {
     lines.push("@Entity")
     lines.push(`@Table(name = "${table.name}")`)
   }
+  if (options.lombok) {
+    lines.push("@Data")
+  }
   lines.push(`public class ${cls} {`)
   for (const col of table.columns) {
     const javaType = mapType(col.type, SQL_TO_JAVA)
@@ -203,9 +206,6 @@ function generateJava(table: Table, options: GenOptions): string {
       } else {
         lines.push(`    @Column(name = "${col.name}")`)
       }
-    }
-    if (options.lombok) {
-      lines.push("    @Getter @Setter")
     }
     lines.push(`    private ${javaType} ${fieldName};`)
   }
@@ -396,77 +396,79 @@ export function SqlToEntity() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-auto p-6">
-        <div className="space-y-6 max-w-4xl mx-auto">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-foreground">Language</label>
-              <select
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
-                value={lang}
-                onChange={(e) => setLang(e.target.value as Lang)}
-              >
-                {LANGUAGES.map((l) => (
-                  <option key={l.value} value={l.value}>{l.label}</option>
-                ))}
-              </select>
-            </div>
-            {LANG_HAS_JPA.has(lang) && (
-              <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={jpa}
-                  onChange={(e) => setJpa(e.target.checked)}
-                  className="rounded border-input"
-                />
-                {lang === "csharp" ? "EF Annotations" : "JPA Annotations"}
-              </label>
-            )}
-            {LANG_HAS_LOMBOK.has(lang) && jpa && (
-              <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={lombok}
-                  onChange={(e) => setLombok(e.target.checked)}
-                  className="rounded border-input"
-                />
-                Lombok
-              </label>
-            )}
+      <div className="flex items-center justify-between border-b border-border px-6 py-3 flex-wrap gap-2">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-muted-foreground">Language:</span>
+            <select
+              className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
+              value={lang}
+              onChange={(e) => setLang(e.target.value as Lang)}
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l.value} value={l.value}>{l.label}</option>
+              ))}
+            </select>
           </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">SQL (CREATE TABLE)</label>
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Paste CREATE TABLE SQL here..."
-                className="min-h-[300px]"
+          {LANG_HAS_JPA.has(lang) && (
+            <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={jpa}
+                onChange={(e) => setJpa(e.target.checked)}
+                className="rounded border-border"
               />
+              <span className="text-muted-foreground">{lang === "csharp" ? "EF Annotations" : "JPA Annotations"}</span>
+            </label>
+          )}
+          {LANG_HAS_LOMBOK.has(lang) && (
+            <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={lombok}
+                onChange={(e) => setLombok(e.target.checked)}
+                className="rounded border-border"
+              />
+              <span className="text-muted-foreground">Lombok</span>
+            </label>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 overflow-auto p-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-foreground">SQL (CREATE TABLE)</label>
+              <div />
             </div>
-            <div className="flex flex-col gap-2">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Paste CREATE TABLE SQL here..."
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">{LANGUAGES.find((l) => l.value === lang)?.label} Entity</label>
-              <ReadOnlyTextarea value={output} placeholder="Generated entity class will appear here..." className="min-h-[300px]" />
+              <div />
             </div>
+            <ReadOnlyTextarea value={output} placeholder="Generated entity class will appear here..." />
           </div>
-
-          {error && <ErrorBanner message={error} />}
-
-          <div className="flex gap-2">
-            <Button className="cursor-pointer" onClick={handleConvert}>Convert</Button>
-            <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)} disabled={!output}>
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "Copied!" : "Copy Output"}
-            </Button>
-            <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={loadExample}>
-              Load Example
-            </Button>
-            <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
-              <Trash2 className="h-3.5 w-3.5" />
-              Clear
-            </Button>
-          </div>
+        </div>
+        {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
+        <div className="mt-4 flex gap-2">
+          <Button className="cursor-pointer" onClick={handleConvert}>Convert</Button>
+          <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)} disabled={!output}>
+            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? "Copied!" : "Copy Output"}
+          </Button>
+          <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={loadExample}>
+            Load Example
+          </Button>
+          <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
+            <Trash2 className="h-3.5 w-3.5" />
+            Clear
+          </Button>
         </div>
       </div>
     </div>
