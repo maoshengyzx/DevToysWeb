@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Copy, Check, Trash2 } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { useLocale } from "@/i18n/useLocale"
 
 interface FormatterProps {
   format: (input: string, indent?: number) => string
@@ -15,9 +16,10 @@ interface FormatterProps {
 export function Formatter({
   format,
   minify,
-  inputPlaceholder = "Paste your code here...",
+  inputPlaceholder,
   indentOptions,
 }: FormatterProps) {
+  const { t } = useLocale()
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
   const [error, setError] = useState("")
@@ -70,7 +72,7 @@ export function Formatter({
     <div className="flex h-full flex-col">
       {indentOptions && (
         <div className="flex items-center gap-2 border-b border-border px-6 py-3">
-          <span className="text-sm text-muted-foreground">Indent:</span>
+          <span className="text-sm text-muted-foreground">{t("shared.indent")}</span>
           <div className="flex gap-1">
             {indentOptions.map((opt) => (
               <Button
@@ -105,30 +107,30 @@ export function Formatter({
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Input</label>
+            <label className="text-sm font-medium text-foreground">{t("shared.input")}</label>
             <Textarea
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
-              placeholder={inputPlaceholder}
+              placeholder={inputPlaceholder ?? t("shared.codePlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Output</label>
-            <ReadOnlyTextarea value={output} placeholder="Formatted result will appear here..." />
+            <label className="text-sm font-medium text-foreground">{t("shared.output")}</label>
+            <ReadOnlyTextarea value={output} placeholder={t("shared.resultPlaceholder")} />
           </div>
         </div>
         <div className="mt-4 flex gap-2">
-          <Button className="cursor-pointer" onClick={handleFormat}>Format</Button>
+          <Button className="cursor-pointer" onClick={handleFormat}>{t("shared.format")}</Button>
           {minify && (
-            <Button variant="outline" className="cursor-pointer" onClick={handleMinify}>Minify</Button>
+            <Button variant="outline" className="cursor-pointer" onClick={handleMinify}>{t("shared.minify")}</Button>
           )}
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy Output"}
+            {copied ? t("shared.copied") : t("shared.copyOutput")}
           </Button>
           <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("shared.clear")}
           </Button>
         </div>
       </div>

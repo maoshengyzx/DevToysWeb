@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react"
+import { useLocale } from "@/i18n/useLocale"
 import { Textarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
@@ -22,6 +23,7 @@ const flags = [
 ]
 
 export function RegexTester() {
+  const { t } = useLocale()
   const [regex, setRegex] = useState("")
   const [testString, setTestString] = useState("")
   const [selectedFlags, setSelectedFlags] = useState(new Set(["g"]))
@@ -76,7 +78,7 @@ export function RegexTester() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-border px-6 py-3 flex-wrap">
-        <span className="text-sm text-muted-foreground">Flags:</span>
+        <span className="text-sm text-muted-foreground">{t("tool.regex.flags")}</span>
         <div className="flex gap-1">
           {flags.map((f) => (
             <Button
@@ -93,18 +95,18 @@ export function RegexTester() {
       </div>
       <div className="flex-1 overflow-auto p-6 space-y-4">
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">Regular Expression</label>
+          <label className="text-sm font-medium text-foreground">{t("tool.regex.pattern")}</label>
           <input
             type="text"
             value={regex}
             onChange={(e) => setRegex(e.target.value)}
-            placeholder="Enter regex pattern..."
+            placeholder={t("tool.regex.patternPlaceholder")}
             className="h-9 w-full rounded-md border border-input bg-background px-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
           {error && <ErrorBanner message={error} />}
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">Common Patterns</label>
+          <label className="text-sm font-medium text-foreground">{t("tool.regex.commonPatterns")}</label>
           <div className="flex flex-wrap gap-1.5">
             {COMMON_PATTERNS.map((p) => (
               <Button
@@ -120,28 +122,28 @@ export function RegexTester() {
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">Test String</label>
+          <label className="text-sm font-medium text-foreground">{t("tool.regex.testString")}</label>
           <Textarea
             value={testString}
             onChange={(e) => setTestString(e.target.value)}
-            placeholder="Enter text to test against..."
+            placeholder={t("tool.regex.testPlaceholder")}
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">Highlighted Matches ({matches.length})</label>
+          <label className="text-sm font-medium text-foreground">{t("tool.regex.matches")} ({matches.length})</label>
           <div className="min-h-[100px] rounded-md border border-border bg-muted px-3 py-2 text-sm font-mono text-foreground whitespace-pre-wrap break-all">
-            {testString ? highlightMatch(testString) : "Matches will be highlighted here..."}
+            {testString ? highlightMatch(testString) : t("tool.regex.matchesPlaceholder")}
           </div>
         </div>
         {matches.length > 0 && (
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Match Details</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.regex.matchDetails")}</label>
             <div className="space-y-1">
               {matches.map((m, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs font-mono">
                   <span className="text-muted-foreground">#{i + 1}</span>
                   <code className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">{m.text}</code>
-                  <span className="text-muted-foreground">at {m.index}</span>
+                  <span className="text-muted-foreground">{t("tool.regex.at")} {m.index}</span>
                   {m.groups.length > 0 && (
                     <span className="text-muted-foreground">groups: [{m.groups.join(", ")}]</span>
                   )}

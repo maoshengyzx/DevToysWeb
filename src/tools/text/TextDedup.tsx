@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react"
 import { Textarea, ReadOnlyTextarea } from "@/components/ui/shared"
+import { useLocale } from "@/i18n/useLocale"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, Trash2 } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
@@ -7,6 +8,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 type DedupMode = "exact" | "trim" | "caseInsensitive"
 
 export function TextDedup() {
+  const { t } = useLocale()
   const [input, setInput] = useState("")
   const [mode, setMode] = useState<DedupMode>("exact")
   const [sortOutput, setSortOutput] = useState(false)
@@ -42,11 +44,11 @@ export function TextDedup() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-border px-6 py-3 flex-wrap">
-        <span className="text-sm text-muted-foreground">Mode:</span>
+        <span className="text-sm text-muted-foreground">{t("tool.textDedup.mode")}</span>
         {([
-          { label: "Exact Match", value: "exact" as DedupMode },
-          { label: "Trim Whitespace", value: "trim" as DedupMode },
-          { label: "Case Insensitive", value: "caseInsensitive" as DedupMode },
+          { label: t("tool.textDedup.exactMatch"), value: "exact" as DedupMode },
+          { label: t("tool.textDedup.trimWhitespace"), value: "trim" as DedupMode },
+          { label: t("tool.textDedup.caseInsensitive"), value: "caseInsensitive" as DedupMode },
         ]).map((opt) => (
           <Button
             key={opt.value}
@@ -66,39 +68,39 @@ export function TextDedup() {
             onChange={(e) => setSortOutput(e.target.checked)}
             className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
           />
-          Sort output
+          {t("tool.textDedup.sortOutput")}
         </label>
       </div>
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Input (one item per line)</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.textDedup.inputLabel")}</label>
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Paste your lines here, one per line..."
+              placeholder={t("tool.textDedup.placeholder")}
             />
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">Output (unique lines)</label>
+              <label className="text-sm font-medium text-foreground">{t("tool.textDedup.outputLabel")}</label>
               {input.trim() && (
                 <span className="text-xs text-muted-foreground">
-                  {result.unique} unique, {result.removed} removed
+                  {t("tool.textDedup.stats").replace("{unique}", String(result.unique)).replace("{removed}", String(result.removed))}
                 </span>
               )}
             </div>
-            <ReadOnlyTextarea value={result.output} placeholder="Deduplicated lines will appear here..." />
+            <ReadOnlyTextarea value={result.output} placeholder={t("tool.textDedup.resultPlaceholder")} />
           </div>
         </div>
         <div className="mt-4 flex gap-2">
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(result.output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy Output"}
+            {copied ? t("shared.copied") : t("shared.copyOutput")}
           </Button>
           <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("shared.clear")}
           </Button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react"
+import { useLocale } from "@/i18n/useLocale"
 import { Textarea, ReadOnlyTextarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, Trash2, Braces, FileCode, Link, ArrowDownUp, Layers } from "lucide-react"
@@ -342,6 +343,8 @@ export function JsonFormatter() {
   const [showStats, setShowStats] = useState(false)
   const [copied, handleCopy] = useCopyToClipboard()
 
+  const { t } = useLocale()
+
   const parsedJson = useMemo(() => {
     if (!input.trim()) return null
     try {
@@ -432,36 +435,36 @@ export function JsonFormatter() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-border px-6 py-3 flex-wrap">
-        <span className="text-sm text-muted-foreground">Indent:</span>
+        <span className="text-sm text-muted-foreground">{t("tool.jsonFormat.indent")}</span>
         <Button variant={indent === 2 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(2); if (input.trim() && !error) setOutput(formatJson(input, 2)) }}>2</Button>
         <Button variant={indent === 4 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(4); if (input.trim() && !error) setOutput(formatJson(input, 4)) }}>4</Button>
         <Button variant={indent === 1 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(1); if (input.trim() && !error) setOutput(formatJson(input, 1)) }}>Tab</Button>
         {error && <ErrorBanner message={error} />}
         {fixes.length > 0 && !error && (
-          <span className="ml-auto text-xs text-green-500">Auto-fixed: {fixes.join(", ")}</span>
+          <span className="ml-auto text-xs text-green-500">{t("tool.jsonFormat.autoFixed")}{fixes.join(", ")}</span>
         )}
       </div>
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Input</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.jsonFormat.input")}</label>
             <Textarea
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
-              placeholder="Paste JSON here..."
+              placeholder={t("tool.jsonFormat.placeholder")}
             />
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">Output</label>
+              <label className="text-sm font-medium text-foreground">{t("tool.jsonFormat.output")}</label>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="sm" className={`gap-1 cursor-pointer ${showTree ? "text-primary" : "text-muted-foreground"}`} onClick={() => { setShowTree(!showTree); setShowStats(false) }}>
                   <Braces className="h-3.5 w-3.5" />
-                  Tree
+                  {t("tool.jsonFormat.tree")}
                 </Button>
                 <Button variant="ghost" size="sm" className={`gap-1 cursor-pointer ${showStats ? "text-primary" : "text-muted-foreground"}`} onClick={() => { setShowStats(!showStats); setShowTree(false) }}>
                   <Layers className="h-3.5 w-3.5" />
-                  Stats
+                  {t("tool.jsonFormat.stats")}
                 </Button>
               </div>
             </div>
@@ -481,48 +484,48 @@ export function JsonFormatter() {
                 </div>
               </div>
             ) : (
-              <ReadOnlyTextarea value={output} placeholder="Formatted result will appear here..." />
+              <ReadOnlyTextarea value={output} placeholder={t("tool.jsonFormat.formattedPlaceholder")} />
             )}
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button className="cursor-pointer" onClick={() => applyAction((obj) => JSON.stringify(obj, null, indent))}>Format</Button>
-          <Button variant="outline" className="cursor-pointer" onClick={() => applyAction((obj) => JSON.stringify(obj))}>Minify</Button>
+          <Button className="cursor-pointer" onClick={() => applyAction((obj) => JSON.stringify(obj, null, indent))}>{t("tool.jsonFormat.format")}</Button>
+          <Button variant="outline" className="cursor-pointer" onClick={() => applyAction((obj) => JSON.stringify(obj))}>{t("tool.jsonFormat.minify")}</Button>
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleSortKeys}>
             <ArrowDownUp className="h-3.5 w-3.5" />
-            Sort Keys
+            {t("tool.jsonFormat.sortKeys")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleFlatten}>
-            Flatten
+            {t("tool.jsonFormat.flatten")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleUnflatten}>
-            Unflatten
+            {t("tool.jsonFormat.unflatten")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleStructure}>
-            Structure
+            {t("tool.jsonFormat.structure")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleToMdTable}>
-            → MD Table
+            {t("tool.jsonFormat.toMdTable")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleFromMdTable}>
-            MD Table →
+            {t("tool.jsonFormat.fromMdTable")}
           </Button>
           <div className="w-px h-6 bg-border self-center" />
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy"}
+            {copied ? t("shared.copied") : t("shared.copy")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleCopyAsJsVar} disabled={!output}>
             <FileCode className="h-3.5 w-3.5" />
-            Copy as JS
+            {t("tool.jsonFormat.copyAsJs")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleCopyAsUrlParams} disabled={!output}>
             <Link className="h-3.5 w-3.5" />
-            Copy as Params
+            {t("tool.jsonFormat.copyAsParams")}
           </Button>
           <Button variant="ghost" className="gap-1.5 cursor-pointer ml-auto" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("tool.jsonFormat.clear")}
           </Button>
         </div>
       </div>

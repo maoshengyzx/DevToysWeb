@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Copy, Check, ArrowDownUp, Trash2, Upload } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { useLocale } from "@/i18n/useLocale"
 
 function parseCsv(text: string): Record<string, string>[] {
   const lines = text.split(/\r?\n/).filter((line) => line.trim())
@@ -142,6 +143,7 @@ function convert(input: string, mode: Mode, typedInference: boolean): { output: 
 }
 
 export function CsvToJson() {
+  const { t } = useLocale()
   const [mode, setMode] = useState<Mode>("csvToJson")
   const [input, setInput] = useState("")
   const [copied, handleCopy] = useCopyToClipboard()
@@ -200,8 +202,8 @@ export function CsvToJson() {
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-border px-6 py-3 flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Button variant={mode === "csvToJson" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setMode("csvToJson"); setDropError(""); }}>CSV → JSON</Button>
-          <Button variant={mode === "jsonToCsv" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setMode("jsonToCsv"); setDropError(""); }}>JSON → CSV</Button>
+          <Button variant={mode === "csvToJson" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setMode("csvToJson"); setDropError(""); }}>{t("tool.csvToJson.csvToJson")}</Button>
+          <Button variant={mode === "jsonToCsv" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setMode("jsonToCsv"); setDropError(""); }}>{t("tool.csvToJson.jsonToCsv")}</Button>
         </div>
         <div className="flex items-center gap-2">
           {mode === "csvToJson" && (
@@ -212,12 +214,18 @@ export function CsvToJson() {
                 onChange={(e) => setTypedInference(e.target.checked)}
                 className="rounded border-border"
               />
-              <span className="text-muted-foreground">Infer types</span>
+              <span className="text-muted-foreground">{t("tool.csvToJson.inferTypes")}</span>
             </label>
           )}
+          <div className="h-4 w-px bg-border" />
+          <input type="file" accept=".csv,.json,text/csv,application/json" className="hidden" onChange={handleFileUpload} id="csv-json-file-input" />
+          <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => document.getElementById("csv-json-file-input")?.click()}>
+            <Upload className="h-3.5 w-3.5" />
+            {t("shared.upload")}
+          </Button>
           <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={handleSwap}>
             <ArrowDownUp className="h-3.5 w-3.5" />
-            Swap
+            {t("shared.swap")}
           </Button>
         </div>
       </div>
@@ -236,35 +244,35 @@ export function CsvToJson() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">
-                {mode === "csvToJson" ? "CSV Input" : "JSON Input"}
+                {mode === "csvToJson" ? t("tool.csvToJson.csvInput") : t("tool.csvToJson.jsonInput")}
               </label>
               <div />
             </div>
             <Textarea
               value={input}
               onChange={(e) => { setInput(e.target.value); setDropError(""); }}
-              placeholder={mode === "csvToJson" ? "Paste CSV here..." : "Paste JSON array here..."}
+              placeholder={mode === "csvToJson" ? t("tool.csvToJson.csvPlaceholder") : t("tool.csvToJson.jsonPlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">
-                {mode === "csvToJson" ? "JSON Output" : "CSV Output"}
+                {mode === "csvToJson" ? t("tool.csvToJson.jsonOutput") : t("tool.csvToJson.csvOutput")}
               </label>
               <div />
             </div>
-            <ReadOnlyTextarea value={output} placeholder="Result will appear here..." />
+            <ReadOnlyTextarea value={output} placeholder={t("shared.resultPlaceholder")} />
           </div>
         </div>
         {displayError && <div className="mt-3"><ErrorBanner message={displayError} /></div>}
         <div className="mt-4 flex gap-2">
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy Output"}
+            {copied ? t("shared.copied") : t("shared.copyOutput")}
           </Button>
           <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("shared.clear")}
           </Button>
         </div>
       </div>

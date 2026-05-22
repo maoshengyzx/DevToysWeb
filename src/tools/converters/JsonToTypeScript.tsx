@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Copy, Check, Trash2 } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { useLocale } from "@/i18n/useLocale"
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
@@ -80,6 +81,7 @@ function jsonToTs(json: string): string {
 }
 
 export function JsonToTypeScript() {
+  const { t } = useLocale()
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
   const [error, setError] = useState("")
@@ -108,28 +110,28 @@ export function JsonToTypeScript() {
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">JSON Input</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.jsonToTs.jsonInput")}</label>
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder='Paste JSON here, e.g. { "name": "John", "age": 30 }'
+              placeholder={t("tool.jsonToTs.jsonPlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">TypeScript Interface</label>
-            <ReadOnlyTextarea value={output} placeholder="TypeScript interface will appear here..." />
+            <label className="text-sm font-medium text-foreground">{t("tool.jsonToTs.tsOutput")}</label>
+            <ReadOnlyTextarea value={output} placeholder={t("tool.jsonToTs.tsPlaceholder")} />
           </div>
         </div>
         {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
         <div className="mt-4 flex gap-2">
-          <Button className="cursor-pointer" onClick={handleConvert}>Convert</Button>
+          <Button className="cursor-pointer" onClick={handleConvert}>{t("shared.convert")}</Button>
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy Output"}
+            {copied ? t("shared.copied") : t("shared.copyOutput")}
           </Button>
           <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("shared.clear")}
           </Button>
         </div>
       </div>

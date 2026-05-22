@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react"
+import { useLocale } from "@/i18n/useLocale"
 
 const HTTP_STATUS_CODES: Record<number, string> = {
   100: "Continue",
@@ -83,6 +84,7 @@ function getCategoryColor(code: number): string {
 }
 
 export function HttpStatusCodeLookup() {
+  const { t } = useLocale()
   const [search, setSearch] = useState("")
 
   const results = useMemo(() => {
@@ -101,7 +103,7 @@ export function HttpStatusCodeLookup() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by code or description..."
+            placeholder={t("tool.httpStatus.searchPlaceholder")}
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mb-4"
           />
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -113,7 +115,7 @@ export function HttpStatusCodeLookup() {
               </div>
             ))}
             {results.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4 col-span-full">No matching status codes found</p>
+              <p className="text-sm text-muted-foreground text-center py-4 col-span-full">{t("tool.httpStatus.noResults")}</p>
             )}
           </div>
         </div>

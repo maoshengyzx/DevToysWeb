@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useLocale } from "@/i18n/useLocale"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, RefreshCw } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
@@ -45,6 +46,7 @@ function generatePassword(length: number, useLower: boolean, useUpper: boolean, 
 }
 
 export function PasswordGenerator() {
+  const { t } = useLocale()
   const [length, setLength] = useState(16)
   const [useLowercase, setUseLowercase] = useState(true)
   const [useUppercase, setUseUppercase] = useState(true)
@@ -65,10 +67,10 @@ export function PasswordGenerator() {
     if (useNumbers) bits += 10
     if (useSymbols) bits += 24
     const entropy = length * Math.log2(bits || 1)
-    if (entropy < 40) return { label: "Weak", color: "text-red-500" }
-    if (entropy < 60) return { label: "Fair", color: "text-yellow-500" }
-    if (entropy < 80) return { label: "Good", color: "text-green-500" }
-    return { label: "Strong", color: "text-green-600" }
+    if (entropy < 40) return { label: t("tool.password.weak"), color: "text-red-500" }
+    if (entropy < 60) return { label: t("tool.password.fair"), color: "text-yellow-500" }
+    if (entropy < 80) return { label: t("tool.password.good"), color: "text-green-500" }
+    return { label: t("tool.password.strong"), color: "text-green-600" }
   })()
 
   return (
@@ -78,7 +80,7 @@ export function PasswordGenerator() {
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-foreground">
-                  Length: {length}
+                  {t("tool.password.length")} {length}
                 </label>
                 <input
                   type="range"
@@ -91,10 +93,10 @@ export function PasswordGenerator() {
               </div>
               <div className="space-y-2">
                 {[
-                  { label: "Lowercase (a-z)", value: useLowercase, setter: setUseLowercase },
-                  { label: "Uppercase (A-Z)", value: useUppercase, setter: setUseUppercase },
-                  { label: "Numbers (0-9)", value: useNumbers, setter: setUseNumbers },
-                  { label: "Symbols (!@#$...)", value: useSymbols, setter: setUseSymbols },
+                  { label: t("tool.password.lowercase"), value: useLowercase, setter: setUseLowercase },
+                  { label: t("tool.password.uppercase"), value: useUppercase, setter: setUseUppercase },
+                  { label: t("tool.password.numbers"), value: useNumbers, setter: setUseNumbers },
+                  { label: t("tool.password.symbols"), value: useSymbols, setter: setUseSymbols },
                 ].map((opt) => (
                   <label key={opt.label} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -110,11 +112,11 @@ export function PasswordGenerator() {
               <div className="flex gap-2">
                 <Button className="gap-1.5 cursor-pointer" onClick={generate}>
                   <RefreshCw className="h-3.5 w-3.5" />
-                  Generate
+                  {t("shared.generate")}
                 </Button>
                 <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(password)} disabled={!password}>
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  {copied ? "Copied!" : "Copy"}
+                  {copied ? t("shared.copied") : t("shared.copy")}
                 </Button>
               </div>
             </div>
@@ -129,7 +131,7 @@ export function PasswordGenerator() {
                 </div>
               ) : (
                 <div className="flex items-center justify-center min-h-[80px] rounded-md border border-dashed border-border text-sm text-muted-foreground">
-                  Click Generate to create a password
+                  {t("tool.password.emptyHint")}
                 </div>
               )}
             </div>

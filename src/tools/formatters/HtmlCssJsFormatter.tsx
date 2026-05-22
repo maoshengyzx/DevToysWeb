@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useLocale } from "@/i18n/useLocale"
 import { Textarea, ReadOnlyTextarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, Trash2 } from "lucide-react"
@@ -53,6 +54,7 @@ function unescapeCode(input: string): string {
 }
 
 export function HtmlCssJsFormatter() {
+  const { t } = useLocale()
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
   const [error, setError] = useState("")
@@ -88,7 +90,7 @@ export function HtmlCssJsFormatter() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-border px-6 py-3 flex-wrap">
-        <span className="text-sm text-muted-foreground">Language:</span>
+        <span className="text-sm text-muted-foreground">{t("tool.htmlCssJsFormatter.language")}</span>
         {languageOptions.map((opt) => (
           <Button
             key={opt.value}
@@ -101,7 +103,7 @@ export function HtmlCssJsFormatter() {
           </Button>
         ))}
         <div className="w-px h-4 bg-border mx-1" />
-        <span className="text-sm text-muted-foreground">Action:</span>
+        <span className="text-sm text-muted-foreground">{t("tool.htmlCssJsFormatter.action")}</span>
         {(["format", "minify", "escape", "unescape"] as const).map((m) => (
           <Button
             key={m}
@@ -116,7 +118,7 @@ export function HtmlCssJsFormatter() {
         {mode === "format" && (
           <>
             <div className="w-px h-4 bg-border mx-1" />
-            <span className="text-sm text-muted-foreground">Indent:</span>
+            <span className="text-sm text-muted-foreground">{t("tool.htmlCssJsFormatter.indent")}</span>
             <Button variant={indent === 2 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => setIndent(2)}>2</Button>
             <Button variant={indent === 4 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => setIndent(4)}>4</Button>
           </>
@@ -125,28 +127,28 @@ export function HtmlCssJsFormatter() {
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Input</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.htmlCssJsFormatter.input")}</label>
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`Paste your ${lang.toUpperCase()} code here...`}
+              placeholder={t("tool.htmlCssJsFormatter.codePlaceholder").replace("{lang}", lang.toUpperCase())}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Output</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.htmlCssJsFormatter.output")}</label>
             <ReadOnlyTextarea value={output} placeholder="Result will appear here..." />
           </div>
         </div>
         {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
         <div className="mt-4 flex gap-2">
-          <Button className="cursor-pointer" onClick={handleProcess}>Process</Button>
+          <Button className="cursor-pointer" onClick={handleProcess}>{t("tool.htmlCssJsFormatter.process")}</Button>
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy Output"}
+            {copied ? t("shared.copied") : t("shared.copyOutput")}
           </Button>
           <Button variant="ghost" className="gap-1.5 cursor-pointer" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("shared.clear")}
           </Button>
         </div>
       </div>

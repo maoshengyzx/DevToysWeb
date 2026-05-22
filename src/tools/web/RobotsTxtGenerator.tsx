@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { ReadOnlyTextarea } from "@/components/ui/shared"
 import { Copy, Check, Download, Plus, Trash2 } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { useLocale } from "@/i18n/useLocale"
 
 interface Rule {
   userAgent: string
@@ -17,6 +18,7 @@ export function RobotsTxtGenerator() {
   ])
   const [sitemap, setSitemap] = useState("")
   const [copied, handleCopy] = useCopyToClipboard()
+  const { t } = useLocale()
 
   const output = generateRobotsTxt(rules, sitemap)
 
@@ -109,7 +111,7 @@ export function RobotsTxtGenerator() {
         {rules.map((rule, i) => (
           <div key={i} className="rounded-md border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-foreground">Rule {i + 1}</span>
+              <span className="text-sm font-medium text-foreground">{t("tool.robotsTxt.rule")} {i + 1}</span>
               {rules.length > 1 && (
                 <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer" onClick={() => removeRule(i)}>
                   <Trash2 className="h-3.5 w-3.5" />
@@ -117,7 +119,7 @@ export function RobotsTxtGenerator() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground w-24">User-agent:</label>
+              <label className="text-sm text-muted-foreground w-24">{t("tool.robotsTxt.userAgent")}:</label>
               <input
                 type="text"
                 value={rule.userAgent}
@@ -127,9 +129,9 @@ export function RobotsTxtGenerator() {
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Disallow paths:</span>
+                <span className="text-sm text-muted-foreground">{t("tool.robotsTxt.disallowPaths")}:</span>
                 <Button variant="ghost" size="sm" className="h-6 text-xs cursor-pointer" onClick={() => addDisallow(i)}>
-                  <Plus className="h-3 w-3" /> Add
+                  <Plus className="h-3 w-3" /> {t("tool.robotsTxt.add")}
                 </Button>
               </div>
               {rule.disallow.map((d, j) => (
@@ -148,9 +150,9 @@ export function RobotsTxtGenerator() {
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Allow paths:</span>
+                <span className="text-sm text-muted-foreground">{t("tool.robotsTxt.allowPaths")}:</span>
                 <Button variant="ghost" size="sm" className="h-6 text-xs cursor-pointer" onClick={() => addAllow(i)}>
-                  <Plus className="h-3 w-3" /> Add
+                  <Plus className="h-3 w-3" /> {t("tool.robotsTxt.add")}
                 </Button>
               </div>
               {rule.allow.map((a, j) => (
@@ -168,12 +170,12 @@ export function RobotsTxtGenerator() {
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground w-24">Crawl-delay:</label>
+              <label className="text-sm text-muted-foreground w-24">{t("tool.robotsTxt.crawlDelay")}:</label>
               <input
                 type="text"
                 value={rule.crawlDelay}
                 onChange={(e) => updateRule(i, "crawlDelay", e.target.value)}
-                placeholder="e.g. 10 (seconds)"
+                placeholder={t("tool.robotsTxt.crawlDelayPlaceholder")}
                 className="h-8 w-40 rounded-md border border-input bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
@@ -181,31 +183,31 @@ export function RobotsTxtGenerator() {
         ))}
 
         <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={addRule}>
-          <Plus className="h-3.5 w-3.5" /> Add Rule
+          <Plus className="h-3.5 w-3.5" /> {t("tool.robotsTxt.addRule")}
         </Button>
 
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-foreground shrink-0">Sitemap URL:</label>
+          <label className="text-sm font-medium text-foreground shrink-0">{t("tool.robotsTxt.sitemapUrl")}:</label>
           <input
             type="url"
             value={sitemap}
             onChange={(e) => setSitemap(e.target.value)}
-            placeholder="https://example.com/sitemap.xml"
+            placeholder={t("tool.robotsTxt.sitemapPlaceholder")}
             className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Generated robots.txt</label>
+          <label className="text-sm font-medium text-foreground">{t("tool.robotsTxt.generated")}</label>
           <ReadOnlyTextarea value={output} className="min-h-[200px]" />
           <div className="flex gap-2">
             <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "Copied!" : "Copy"}
+              {copied ? t("shared.copied") : t("shared.copy")}
             </Button>
             <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleDownload}>
               <Download className="h-3.5 w-3.5" />
-              Download
+              {t("shared.download")}
             </Button>
           </div>
         </div>

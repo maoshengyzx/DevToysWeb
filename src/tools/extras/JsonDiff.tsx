@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Copy, Check, Trash2, ArrowDownUp } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { useLocale } from "@/i18n/useLocale"
 
 type DiffType = "added" | "removed" | "changed" | "unchanged"
 
@@ -70,6 +71,7 @@ export function JsonDiff() {
   const [rightInput, setRightInput] = useState("")
   const [showOnlyDiff, setShowOnlyDiff] = useState(false)
   const [copied, handleCopy] = useCopyToClipboard()
+  const { t } = useLocale()
 
   const { lines, error } = useMemo(() => {
     if (!leftInput.trim() && !rightInput.trim()) return { lines: [] as DiffLine[], error: "" }
@@ -125,20 +127,20 @@ export function JsonDiff() {
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Left (Old)</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.jsonDiff.leftOld")}</label>
             <Textarea
               value={leftInput}
               onChange={(e) => setLeftInput(e.target.value)}
-              placeholder="Paste original JSON here..."
+              placeholder={t("tool.jsonDiff.leftPlaceholder")}
               className="min-h-[200px]"
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">Right (New)</label>
+            <label className="text-sm font-medium text-foreground">{t("tool.jsonDiff.rightNew")}</label>
             <Textarea
               value={rightInput}
               onChange={(e) => setRightInput(e.target.value)}
-              placeholder="Paste modified JSON here..."
+              placeholder={t("tool.jsonDiff.rightPlaceholder")}
               className="min-h-[200px]"
             />
           </div>
@@ -147,11 +149,11 @@ export function JsonDiff() {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleSwap}>
             <ArrowDownUp className="h-3.5 w-3.5" />
-            Swap
+            {t("shared.swap")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
-            Clear
+            {t("shared.clear")}
           </Button>
           <label className="flex items-center gap-1.5 text-sm cursor-pointer ml-auto">
             <input
@@ -160,7 +162,7 @@ export function JsonDiff() {
               onChange={(e) => setShowOnlyDiff(e.target.checked)}
               className="rounded border-border"
             />
-            <span className="text-muted-foreground">Differences only</span>
+            <span className="text-muted-foreground">{t("tool.jsonDiff.differencesOnly")}</span>
           </label>
         </div>
 
@@ -169,10 +171,10 @@ export function JsonDiff() {
         {lines.length > 0 && (
           <div className="mt-4">
             <div className="flex items-center gap-4 mb-3">
-              {stats.added > 0 && <span className="text-xs text-green-600 dark:text-green-400">{stats.added} added</span>}
-              {stats.removed > 0 && <span className="text-xs text-red-600 dark:text-red-400">{stats.removed} removed</span>}
-              {stats.changed > 0 && <span className="text-xs text-yellow-600 dark:text-yellow-400">{stats.changed} changed</span>}
-              {stats.unchanged > 0 && <span className="text-xs text-muted-foreground">{stats.unchanged} unchanged</span>}
+              {stats.added > 0 && <span className="text-xs text-green-600 dark:text-green-400">{stats.added} {t("tool.jsonDiff.added")}</span>}
+              {stats.removed > 0 && <span className="text-xs text-red-600 dark:text-red-400">{stats.removed} {t("tool.jsonDiff.removed")}</span>}
+              {stats.changed > 0 && <span className="text-xs text-yellow-600 dark:text-yellow-400">{stats.changed} {t("tool.jsonDiff.changed")}</span>}
+              {stats.unchanged > 0 && <span className="text-xs text-muted-foreground">{stats.unchanged} {t("tool.jsonDiff.unchanged")}</span>}
             </div>
             <div className="rounded-md border border-input bg-muted overflow-auto max-h-[400px]">
               <div className="font-mono text-xs">
@@ -207,7 +209,7 @@ export function JsonDiff() {
                     )})}
                 {filteredLines.length === 0 && (
                   <div className="px-3 py-4 text-center text-sm text-muted-foreground">
-                    No differences found
+                    {t("tool.jsonDiff.noDifferences")}
                   </div>
                 )}
               </div>
@@ -215,7 +217,7 @@ export function JsonDiff() {
             <div className="mt-2">
               <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(filteredLines.map((l) => `${typeLabel[l.type]} ${l.path} = ${formatValue(l.type === "removed" ? l.left : l.right)}`).join("\n"))}>
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                {copied ? "Copied!" : "Copy Diff"}
+                {copied ? t("shared.copied") : t("tool.jsonDiff.copyDiff")}
               </Button>
             </div>
           </div>
@@ -223,7 +225,7 @@ export function JsonDiff() {
 
         {lines.length === 0 && !error && (leftInput.trim() || rightInput.trim()) && (
           <div className="mt-4 text-center text-sm text-muted-foreground py-8">
-            Paste JSON on both sides to compare
+            {t("tool.jsonDiff.emptyHint")}
           </div>
         )}
       </div>

@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
+import { useLocale } from "@/i18n/useLocale"
+import type { TranslationKey } from "@/i18n/locales"
 import {
   Download, Upload, RotateCcw, RotateCw, FlipHorizontal, FlipVertical,
   Crop, Maximize2, Sun, X, Check, Lock, Unlock,
@@ -22,16 +24,16 @@ const DEFAULTS: FilterState = {
   hueRotate: 0, sepia: 0, grayscale: 0, invert: 0, opacity: 100,
 }
 
-const SLIDERS: { key: keyof FilterState; label: string; min: number; max: number; step: number; unit: string }[] = [
-  { key: "brightness", label: "Brightness", min: 0, max: 200, step: 1, unit: "%" },
-  { key: "contrast", label: "Contrast", min: 0, max: 200, step: 1, unit: "%" },
-  { key: "saturate", label: "Saturation", min: 0, max: 200, step: 1, unit: "%" },
-  { key: "blur", label: "Blur", min: 0, max: 20, step: 0.5, unit: "px" },
-  { key: "hueRotate", label: "Hue Rotate", min: 0, max: 360, step: 1, unit: "°" },
-  { key: "sepia", label: "Sepia", min: 0, max: 100, step: 1, unit: "%" },
-  { key: "grayscale", label: "Grayscale", min: 0, max: 100, step: 1, unit: "%" },
-  { key: "invert", label: "Invert", min: 0, max: 100, step: 1, unit: "%" },
-  { key: "opacity", label: "Opacity", min: 0, max: 100, step: 1, unit: "%" },
+const createSliders = (t: (key: TranslationKey) => string): { key: keyof FilterState; label: string; min: number; max: number; step: number; unit: string }[] => [
+  { key: "brightness", label: t("tool.imageEditor.brightness"), min: 0, max: 200, step: 1, unit: "%" },
+  { key: "contrast", label: t("tool.imageEditor.contrast"), min: 0, max: 200, step: 1, unit: "%" },
+  { key: "saturate", label: t("tool.imageEditor.saturation"), min: 0, max: 200, step: 1, unit: "%" },
+  { key: "blur", label: t("tool.imageEditor.blur"), min: 0, max: 20, step: 0.5, unit: "px" },
+  { key: "hueRotate", label: t("tool.imageEditor.hueRotate"), min: 0, max: 360, step: 1, unit: "°" },
+  { key: "sepia", label: t("tool.imageEditor.sepia"), min: 0, max: 100, step: 1, unit: "%" },
+  { key: "grayscale", label: t("tool.imageEditor.grayscale"), min: 0, max: 100, step: 1, unit: "%" },
+  { key: "invert", label: t("tool.imageEditor.invert"), min: 0, max: 100, step: 1, unit: "%" },
+  { key: "opacity", label: t("tool.imageEditor.opacity"), min: 0, max: 100, step: 1, unit: "%" },
 ]
 
 type Tool = "adjust" | "transform" | "crop" | "resize" | "format"
@@ -60,6 +62,7 @@ function buildTransformCSS(rotation: number, flipH: boolean, flipV: boolean): st
 }
 
 export function ImageEditor() {
+  const { t } = useLocale()
   const [sourceUrl, setSourceUrl] = useState("")
   const [originalUrl, setOriginalUrl] = useState("")
   const [filters, setFilters] = useState<FilterState>({ ...DEFAULTS })
@@ -310,8 +313,8 @@ export function ImageEditor() {
           onClick={() => document.getElementById("editor-file-input")?.click()}
         >
           <Upload className="h-12 w-12 text-muted-foreground" />
-          <p className="text-lg font-medium text-foreground">Drop an image here or click to upload</p>
-          <p className="text-sm text-muted-foreground">PNG, JPG, WebP, GIF, SVG</p>
+          <p className="text-lg font-medium text-foreground">{t("tool.imageEditor.dropHint")}</p>
+          <p className="text-sm text-muted-foreground">{t("tool.imageEditor.supportedFormats")}</p>
           <input id="editor-file-input" type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
         </div>
       </div>
@@ -332,14 +335,14 @@ export function ImageEditor() {
           <label className="cursor-pointer">
             <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
               <Upload className="h-3.5 w-3.5" />
-              Upload
+              {t("tool.imageEditor.upload")}
             </Button>
             <input type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
           </label>
           {hasChanges && (
             <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={resetAll}>
               <RotateCcw className="h-3.5 w-3.5" />
-              Reset All
+              {t("tool.imageEditor.resetAll")}
             </Button>
           )}
         </div>
@@ -347,18 +350,18 @@ export function ImageEditor() {
           <span className="text-xs text-muted-foreground">{naturalW} × {naturalH}</span>
           <Button size="sm" className="gap-1.5 cursor-pointer" onClick={handleDownload}>
             <Download className="h-3.5 w-3.5" />
-            Download
+            {t("tool.imageEditor.download")}
           </Button>
         </div>
       </div>
 
       <div className="flex items-center gap-1 border-b border-border px-4 py-1.5">
         {([
-          { key: "adjust" as Tool, icon: Sun, label: "Adjust" },
-          { key: "transform" as Tool, icon: RotateCw, label: "Transform" },
-          { key: "crop" as Tool, icon: Crop, label: "Crop" },
-          { key: "resize" as Tool, icon: Maximize2, label: "Resize" },
-          { key: "format" as Tool, icon: Download, label: "Format" },
+          { key: "adjust" as Tool, icon: Sun, label: t("tool.imageEditor.adjust") },
+          { key: "transform" as Tool, icon: RotateCw, label: t("tool.imageEditor.transform") },
+          { key: "crop" as Tool, icon: Crop, label: t("tool.imageEditor.crop") },
+          { key: "resize" as Tool, icon: Maximize2, label: t("tool.imageEditor.resize") },
+          { key: "format" as Tool, icon: Download, label: t("tool.imageEditor.format") },
         ]).map(({ key, icon: Icon, label }) => (
           <Button
             key={key}
@@ -376,11 +379,11 @@ export function ImageEditor() {
       {tool === "adjust" && (
         <div className="border-b border-border px-4 py-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-foreground">Adjustments</span>
-            <Button variant="ghost" size="sm" className="cursor-pointer text-xs" onClick={resetFilters}>Reset All</Button>
+            <span className="text-sm font-medium text-foreground">{t("tool.imageEditor.adjustments")}</span>
+            <Button variant="ghost" size="sm" className="cursor-pointer text-xs" onClick={resetFilters}>{t("tool.imageEditor.resetFilters")}</Button>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
-            {SLIDERS.map(({ key, label, min, max, step, unit }) => (
+            {createSliders(t).map(({ key, label, min, max, step, unit }) => (
               <div key={key} className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground w-20 shrink-0">{label}</span>
                 <input
@@ -412,13 +415,13 @@ export function ImageEditor() {
 
       {tool === "transform" && (
         <div className="border-b border-border px-4 py-3">
-          <span className="text-sm font-medium text-foreground mb-2 block">Transform</span>
+          <span className="text-sm font-medium text-foreground mb-2 block">{t("tool.imageEditor.transform")}</span>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => setRotation((r) => (r + 90) % 360)}>
-              <RotateCw className="h-3.5 w-3.5" /> Rotate CW
+              <RotateCw className="h-3.5 w-3.5" /> {t("tool.imageEditor.rotateCw")}
             </Button>
             <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => setRotation((r) => (r - 90 + 360) % 360)}>
-              <RotateCcw className="h-3.5 w-3.5" /> Rotate CCW
+              <RotateCcw className="h-3.5 w-3.5" /> {t("tool.imageEditor.rotateCcw")}
             </Button>
             <Button
               variant={flipH ? "default" : "outline"}
@@ -426,7 +429,7 @@ export function ImageEditor() {
               className="gap-1.5 cursor-pointer"
               onClick={() => setFlipH((v) => !v)}
             >
-              <FlipHorizontal className="h-3.5 w-3.5" /> Flip H
+              <FlipHorizontal className="h-3.5 w-3.5" /> {t("tool.imageEditor.flipH")}
             </Button>
             <Button
               variant={flipV ? "default" : "outline"}
@@ -434,12 +437,12 @@ export function ImageEditor() {
               className="gap-1.5 cursor-pointer"
               onClick={() => setFlipV((v) => !v)}
             >
-              <FlipVertical className="h-3.5 w-3.5" /> Flip V
+              <FlipVertical className="h-3.5 w-3.5" /> {t("tool.imageEditor.flipV")}
             </Button>
           </div>
           {(rotation !== 0 || flipH || flipV) && (
             <p className="mt-2 text-xs text-muted-foreground">
-              {rotation !== 0 && `Rotation: ${rotation}°`}
+              {rotation !== 0 && t("tool.imageEditor.rotation").replace("{degree}", String(rotation))}
               {rotation !== 0 && flipH && " · "}
               {flipH && "Flipped H"}
               {flipH && flipV && " · "}
@@ -451,19 +454,19 @@ export function ImageEditor() {
 
       {tool === "crop" && (
         <div className="border-b border-border px-4 py-3">
-          <span className="text-sm font-medium text-foreground mb-2 block">Crop</span>
+          <span className="text-sm font-medium text-foreground mb-2 block">{t("tool.imageEditor.cropTool")}</span>
           <p className="text-xs text-muted-foreground mb-2">
-            {cropRect
-              ? `Selection: ${cropRect.w} × ${cropRect.h} px`
-              : "Click and drag on the image to select a crop area"}
+              {cropRect
+                ? t("tool.imageEditor.selection").replace("{w}", String(cropRect.w)).replace("{h}", String(cropRect.h))
+                : t("tool.imageEditor.cropHint")}
           </p>
           {cropRect && cropRect.w > 0 && cropRect.h > 0 && (
             <div className="flex items-center gap-2">
               <Button size="sm" className="gap-1.5 cursor-pointer" onClick={applyCrop}>
-                <Check className="h-3.5 w-3.5" /> Apply Crop
+                <Check className="h-3.5 w-3.5" /> {t("tool.imageEditor.applyCrop")}
               </Button>
               <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => setCropRect(null)}>
-                <X className="h-3.5 w-3.5" /> Cancel
+                <X className="h-3.5 w-3.5" /> {t("tool.imageEditor.cancel")}
               </Button>
             </div>
           )}
@@ -472,7 +475,7 @@ export function ImageEditor() {
 
       {tool === "resize" && (
         <div className="border-b border-border px-4 py-3">
-          <span className="text-sm font-medium text-foreground mb-2 block">Resize</span>
+          <span className="text-sm font-medium text-foreground mb-2 block">{t("tool.imageEditor.resizeTool")}</span>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-muted-foreground">W</span>
@@ -509,7 +512,7 @@ export function ImageEditor() {
 
       {tool === "format" && (
         <div className="border-b border-border px-4 py-3">
-          <span className="text-sm font-medium text-foreground mb-2 block">Output Format</span>
+          <span className="text-sm font-medium text-foreground mb-2 block">{t("tool.imageEditor.outputFormat")}</span>
           <div className="flex items-center gap-2 mb-3">
             {(["png", "jpeg", "webp"] as OutputFormat[]).map((f) => (
               <Button
@@ -525,7 +528,7 @@ export function ImageEditor() {
           </div>
           {(outputFormat === "jpeg" || outputFormat === "webp") && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-14">Quality</span>
+              <span className="text-xs text-muted-foreground w-14">{t("tool.imageEditor.quality")}</span>
               <input
                 type="range"
                 min={1}

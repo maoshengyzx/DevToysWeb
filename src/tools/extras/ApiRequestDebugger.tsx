@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/shared"
 import { Copy, Check, Send, Trash2 } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { useLocale } from "@/i18n/useLocale"
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS"
 
@@ -34,10 +35,11 @@ export function ApiRequestDebugger() {
   const [loading, setLoading] = useState(false)
   const [showHeaders, setShowHeaders] = useState(true)
   const [copied, handleCopy] = useCopyToClipboard()
+  const { t } = useLocale()
 
   const sendRequest = async () => {
     if (!url.trim()) {
-      setError("Please enter a URL")
+      setError(t("tool.apiRequest.pleaseEnterUrl"))
       return
     }
     setLoading(true)
@@ -103,22 +105,22 @@ export function ApiRequestDebugger() {
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://api.example.com/endpoint"
+            placeholder={t("tool.apiRequest.urlPlaceholder")}
             className="h-9 flex-1 rounded-md border border-input bg-background px-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             onKeyDown={(e) => e.key === "Enter" && sendRequest()}
           />
           <Button className="gap-1.5 cursor-pointer" onClick={sendRequest} disabled={loading}>
             <Send className="h-3.5 w-3.5" />
-            {loading ? "Sending..." : "Send"}
+            {loading ? t("tool.apiRequest.sending") : t("tool.apiRequest.send")}
           </Button>
         </div>
         {!["GET", "HEAD", "OPTIONS"].includes(method) && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">Request Body</label>
+            <label className="text-xs text-muted-foreground">{t("tool.apiRequest.requestBody")}</label>
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder='{"key": "value"}'
+              placeholder={t("tool.apiRequest.bodyPlaceholder")}
               className="min-h-[100px]"
             />
           </div>
@@ -127,7 +129,7 @@ export function ApiRequestDebugger() {
           className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
           onClick={() => setShowHeaders(!showHeaders)}
         >
-          {showHeaders ? "Hide Headers" : "Show Headers"} ({headers.length})
+          {showHeaders ? t("tool.apiRequest.hideHeaders") : t("tool.apiRequest.showHeaders")} ({headers.length})
         </button>
         {showHeaders && (
           <div className="space-y-2">
@@ -137,14 +139,14 @@ export function ApiRequestDebugger() {
                   type="text"
                   value={h.key}
                   onChange={(e) => updateHeader(i, "key", e.target.value)}
-                  placeholder="Header"
+                  placeholder={t("tool.apiRequest.headerPlaceholder")}
                   className="h-7 flex-1 rounded-md border border-input bg-background px-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
                 <input
                   type="text"
                   value={h.value}
                   onChange={(e) => updateHeader(i, "value", e.target.value)}
-                  placeholder="Value"
+                  placeholder={t("tool.apiRequest.valuePlaceholder")}
                   className="h-7 flex-1 rounded-md border border-input bg-background px-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
                 <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 cursor-pointer" onClick={() => removeHeader(i)}>
@@ -152,7 +154,7 @@ export function ApiRequestDebugger() {
                 </Button>
               </div>
             ))}
-            <Button variant="outline" size="sm" className="cursor-pointer text-xs" onClick={addHeader}>+ Add Header</Button>
+            <Button variant="outline" size="sm" className="cursor-pointer text-xs" onClick={addHeader}>{t("tool.apiRequest.addHeader")}</Button>
           </div>
         )}
       </div>
@@ -166,12 +168,12 @@ export function ApiRequestDebugger() {
               <div className="ml-auto">
                 <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(response.body)}>
                   {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  {copied ? "Copied!" : "Copy"}
+                  {copied ? t("shared.copied") : t("shared.copy")}
                 </Button>
               </div>
             </div>
             <details open className="rounded-md border border-border">
-              <summary className="cursor-pointer px-3 py-2 text-xs text-muted-foreground hover:text-foreground">Response Headers</summary>
+              <summary className="cursor-pointer px-3 py-2 text-xs text-muted-foreground hover:text-foreground">{t("tool.apiRequest.responseHeaders")}</summary>
               <div className="px-3 pb-2 space-y-1">
                 {Object.entries(response.headers).map(([k, v]) => (
                   <div key={k} className="text-xs font-mono">
@@ -181,7 +183,7 @@ export function ApiRequestDebugger() {
               </div>
             </details>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-foreground">Response Body</label>
+              <label className="text-sm font-medium text-foreground">{t("tool.apiRequest.responseBody")}</label>
               <pre className="overflow-auto rounded-md border border-border bg-muted p-3 text-xs font-mono text-foreground max-h-[400px]">
                 {response.body || "(empty)"}
               </pre>
@@ -190,7 +192,7 @@ export function ApiRequestDebugger() {
         )}
         {!response && !error && (
           <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            Send a request to see the response
+            {t("tool.apiRequest.emptyHint")}
           </div>
         )}
       </div>

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react"
+import { useLocale } from "@/i18n/useLocale"
 import { Button } from "@/components/ui/button"
 import { ReadOnlyTextarea } from "@/components/ui/shared"
 import { Copy, Check, RefreshCw, Minus, Plus } from "lucide-react"
@@ -36,19 +37,21 @@ function generate(type: GenType, count: number, lang: GenLang, seed: number): st
   }
 }
 
-const TYPE_OPTIONS: { value: GenType; label: string }[] = [
-  { value: "paragraphs", label: "Paragraphs" },
-  { value: "sentences", label: "Sentences" },
-  { value: "words", label: "Words" },
-]
-
-const COUNT_LABELS: Record<GenType, string> = {
-  paragraphs: "Paragraph Count",
-  sentences: "Sentence Count",
-  words: "Word Count",
-}
-
 export function LoremIpsumGenerator() {
+  const { t } = useLocale()
+
+  const TYPE_OPTIONS: { value: GenType; label: string }[] = [
+    { value: "paragraphs", label: t("tool.lorem.paragraphs") },
+    { value: "sentences", label: t("tool.lorem.sentences") },
+    { value: "words", label: t("tool.lorem.words") },
+  ]
+
+  const COUNT_LABELS: Record<GenType, string> = {
+    paragraphs: t("tool.lorem.paragraphCount"),
+    sentences: t("tool.lorem.sentenceCount"),
+    words: t("tool.lorem.wordCount"),
+  }
+
   const [type, setType] = useState<GenType>("paragraphs")
   const [count, setCount] = useState(3)
   const [lang, setLang] = useState<GenLang>("en")
@@ -67,7 +70,7 @@ export function LoremIpsumGenerator() {
     <div className="flex h-full">
       <div className="w-64 shrink-0 border-r border-border p-5 flex flex-col gap-5 overflow-y-auto">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Type</span>
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t("tool.lorem.type")}</span>
           <div className="flex rounded-md border border-input overflow-hidden">
             {TYPE_OPTIONS.map((opt) => (
               <span
@@ -123,7 +126,7 @@ export function LoremIpsumGenerator() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Language</span>
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t("tool.lorem.language")}</span>
           <div className="flex rounded-md border border-input overflow-hidden">
             <span
               role="button"
@@ -136,7 +139,7 @@ export function LoremIpsumGenerator() {
                   : "bg-background text-foreground hover:bg-accent"
               }`}
             >
-              English
+              {t("tool.lorem.english")}
             </span>
             <span
               role="button"
@@ -157,11 +160,11 @@ export function LoremIpsumGenerator() {
         <div className="flex flex-col gap-2 mt-auto">
           <Button className="gap-1.5 cursor-pointer w-full" onClick={doGenerate}>
             <RefreshCw className="h-3.5 w-3.5" />
-            Generate
+            {t("shared.generate")}
           </Button>
           <Button variant="outline" className="gap-1.5 cursor-pointer w-full" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy"}
+            {copied ? t("shared.copied") : t("shared.copy")}
           </Button>
         </div>
       </div>
@@ -177,13 +180,13 @@ export function LoremIpsumGenerator() {
               className="absolute top-3 right-8 z-10 inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-accent cursor-pointer transition-colors shadow-sm"
             >
               {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              {copied ? "Copied!" : "Copy"}
+              {copied ? t("shared.copied") : t("shared.copy")}
             </span>
             <ReadOnlyTextarea value={output} className="min-h-full" />
           </>
         ) : (
           <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-            Configure options on the left, then click Generate
+            {t("tool.lorem.configureHint")}
           </div>
         )}
       </div>

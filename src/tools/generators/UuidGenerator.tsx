@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useLocale } from "@/i18n/useLocale"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, RefreshCw } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
@@ -22,12 +23,8 @@ function uuidv7(): string {
 
 type Version = "v4" | "v7"
 
-const VERSION_LABELS: Record<Version, string> = {
-  v4: "UUID v4 (Random)",
-  v7: "UUID v7 (Time-sorted)",
-}
-
 export function UuidGenerator() {
+  const { t } = useLocale()
   const [version, setVersion] = useState<Version>("v4")
   const [uuids, setUuids] = useState<string[]>([uuidv4()])
   const [count, setCount] = useState(1)
@@ -46,7 +43,7 @@ export function UuidGenerator() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-border px-6 py-3 flex-wrap">
-        <span className="text-sm text-muted-foreground">Version:</span>
+        <span className="text-sm text-muted-foreground">{t("tool.uuid.version")}</span>
         <div className="flex rounded-md border border-input overflow-hidden">
           <span
             role="button"
@@ -71,7 +68,7 @@ export function UuidGenerator() {
             v7 (Time-sorted)
           </span>
         </div>
-        <span className="text-sm text-muted-foreground ml-2">Count:</span>
+        <span className="text-sm text-muted-foreground ml-2">{t("tool.uuid.count")}</span>
         <select
           className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
           value={count}
@@ -82,11 +79,11 @@ export function UuidGenerator() {
           ))}
         </select>
         <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setUppercase(!uppercase)}>
-          {uppercase ? "Uppercase" : "Lowercase"}
+          {uppercase ? t("tool.uuid.uppercase") : t("tool.uuid.lowercase")}
         </Button>
       </div>
       <div className="border-b border-border px-6 py-2">
-        <p className="text-xs text-muted-foreground">{VERSION_LABELS[version]} — {version === "v7" ? "Chronologically sortable, ideal for database primary keys" : "Random, universally unique"}</p>
+        <p className="text-xs text-muted-foreground">{version === "v7" ? t("tool.uuid.v7Desc") : t("tool.uuid.v4Desc")}</p>
       </div>
       <div className="flex-1 overflow-auto p-6">
         <div className="flex flex-col gap-2">
@@ -99,11 +96,11 @@ export function UuidGenerator() {
         <div className="mt-4 flex gap-2">
           <Button className="gap-1.5 cursor-pointer" onClick={generate}>
             <RefreshCw className="h-3.5 w-3.5" />
-            Generate
+            {t("shared.generate")}
           </Button>
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(uuids.join("\n"))}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy All"}
+            {copied ? t("shared.copied") : t("shared.copy")}
           </Button>
         </div>
       </div>

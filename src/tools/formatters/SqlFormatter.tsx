@@ -1,7 +1,9 @@
 import { Formatter } from "@/tools/FormatterLayout"
 import { format as sqlFormat } from "sql-formatter"
+import { useLocale } from "@/i18n/useLocale"
 
 export function SqlFormatter() {
+  const { t } = useLocale()
   const format = (input: string): string => {
     return sqlFormat(input, { tabWidth: 2 })
   }
@@ -14,7 +16,7 @@ export function SqlFormatter() {
     <Formatter
       format={format}
       minify={minify}
-      inputPlaceholder="Paste SQL here..."
+      inputPlaceholder={t("tool.sqlFormat.placeholder")}
     />
   )
 }

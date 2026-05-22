@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useLocale } from "@/i18n/useLocale"
 import { Textarea } from "@/components/ui/shared"
 import { camelCase, pascalCase, snakeCase, kebabCase, constantCase, sentenceCase, capitalCase } from "change-case"
 
@@ -15,6 +16,7 @@ const cases = [
 ]
 
 export function CaseConverter() {
+  const { t } = useLocale()
   const [input, setInput] = useState("")
 
   return (
@@ -22,15 +24,15 @@ export function CaseConverter() {
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2 items-start">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">Input</label>
+              <label className="text-sm font-medium text-foreground">{t("tool.caseConverter.input")}</label>
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Type or paste text to convert..."
+                placeholder={t("tool.caseConverter.placeholder")}
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-foreground">Conversions</label>
+              <label className="text-sm font-medium text-foreground">{t("tool.caseConverter.conversions")}</label>
               {input ? (
                 <div className="flex flex-col gap-1.5">
                   {cases.map((c) => (
@@ -44,7 +46,7 @@ export function CaseConverter() {
                 </div>
               ) : (
                 <div className="flex items-center justify-center min-h-[200px] rounded-md border border-dashed border-border text-sm text-muted-foreground">
-                  Type text on the left to see conversions
+                  {t("tool.caseConverter.emptyHint")}
                 </div>
               )}
             </div>
