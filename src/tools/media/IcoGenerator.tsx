@@ -6,8 +6,14 @@ import { ErrorBanner } from "@/components/ui/error-banner"
 
 const ICO_SIZES = [16, 32, 48, 64, 128, 256]
 
-function createIcoFromImage(img: HTMLImageElement): Blob {
+interface SizePreview {
+  size: number
+  dataUrl: string
+}
+
+function generateIco(img: HTMLImageElement): { blob: Blob; previews: SizePreview[] } {
   const iconData: { data: Uint8Array; size: number }[] = []
+  const previews: SizePreview[] = []
 
   for (const size of ICO_SIZES) {
     const canvas = document.createElement("canvas")
@@ -17,6 +23,7 @@ function createIcoFromImage(img: HTMLImageElement): Blob {
     ctx.clearRect(0, 0, size, size)
     ctx.drawImage(img, 0, 0, size, size)
     const dataUrl = canvas.toDataURL("image/png")
+    previews.push({ size, dataUrl })
     const binaryStr = atob(dataUrl.split(",")[1])
     const data = new Uint8Array(binaryStr.length)
     for (let i = 0; i < binaryStr.length; i++) data[i] = binaryStr.charCodeAt(i)
@@ -32,7 +39,8 @@ function createIcoFromImage(img: HTMLImageElement): Blob {
   const view = new DataView(buffer)
 
   view.setUint16(0, 0, true)
-  view.setUint16(2, iconData.length, true)
+  view.setUint16(2, 1, true)
+  view.setUint16(4, iconData.length, true)
 
   iconData.forEach((icon, i) => {
     const dirOffset = headerSize + i * dirEntrySize
@@ -41,31 +49,39 @@ function createIcoFromImage(img: HTMLImageElement): Blob {
     view.setUint8(dirOffset + 2, 0)
     view.setUint8(dirOffset + 3, 0)
     view.setUint16(dirOffset + 4, 1, true)
-    view.setUint16(dirOffset + 6, icon.data.length, true)
-    view.setUint32(dirOffset + 8, offset, true)
+    view.setUint16(dirOffset + 6, 32, true)
+    view.setUint32(dirOffset + 8, icon.data.length, true)
+    view.setUint32(dirOffset + 12, offset, true)
     const pngBuffer = new Uint8Array(buffer, offset, icon.data.length)
     pngBuffer.set(icon.data)
     offset += icon.data.length
   })
 
-  return new Blob([buffer], { type: "image/x-icon" })
+  return { blob: new Blob([buffer], { type: "image/x-icon" }), previews }
 }
 
 export function IcoGenerator() {
   const { t } = useLocale()
   const [previewUrl, setPreviewUrl] = useState("")
   const [icoUrl, setIcoUrl] = useState("")
+  const [sizePreviews, setSizePreviews] = useState<SizePreview[]>([])
   const [error, setError] = useState("")
   const [generating, setGenerating] = useState(false)
   const prevUrlRef = useRef<string>("")
+  const icoUrlRef = useRef<string>("")
 
   const processFile = useCallback((file: File) => {
     setError("")
     setIcoUrl("")
+    setSizePreviews([])
     setPreviewUrl("")
     if (prevUrlRef.current) {
       URL.revokeObjectURL(prevUrlRef.current)
       prevUrlRef.current = ""
+    }
+    if (icoUrlRef.current) {
+      URL.revokeObjectURL(icoUrlRef.current)
+      icoUrlRef.current = ""
     }
 
     const url = URL.createObjectURL(file)
@@ -78,9 +94,11 @@ export function IcoGenerator() {
       setGenerating(true)
       setTimeout(() => {
         try {
-          const blob = createIcoFromImage(img)
+          const { blob, previews } = generateIco(img)
           const icoObjUrl = URL.createObjectURL(blob)
+          icoUrlRef.current = icoObjUrl
           setIcoUrl(icoObjUrl)
+          setSizePreviews(previews)
         } catch (e) {
           setError(e instanceof Error ? e.message : "Failed to generate ICO")
         } finally {
@@ -128,11 +146,16 @@ export function IcoGenerator() {
   const clearAll = () => {
     setPreviewUrl("")
     setIcoUrl("")
+    setSizePreviews([])
     setError("")
     setGenerating(false)
     if (prevUrlRef.current) {
       URL.revokeObjectURL(prevUrlRef.current)
       prevUrlRef.current = ""
+    }
+    if (icoUrlRef.current) {
+      URL.revokeObjectURL(icoUrlRef.current)
+      icoUrlRef.current = ""
     }
   }
 
@@ -141,7 +164,10 @@ export function IcoGenerator() {
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">{t("tool.icoGenerator.sourceImage")}</label>
+            <div className="flex items-center justify-between min-h-[36px]">
+              <label className="text-sm font-medium text-foreground">{t("tool.icoGenerator.sourceImage")}</label>
+              <div />
+            </div>
             <div
               className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-12 transition-colors duration-150 cursor-pointer min-h-[240px] ${previewUrl ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/50"}`}
               onDrop={handleDrop}
@@ -172,21 +198,26 @@ export function IcoGenerator() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between min-h-[36px]">
+              <label className={`text-sm font-medium text-foreground ${icoUrl ? "" : "invisible"}`}>
+                {t("tool.icoGenerator.result")}
+              </label>
+              <div />
+            </div>
             {error && <ErrorBanner message={error} />}
             {icoUrl ? (
               <div className="flex flex-col gap-4">
-                <label className="text-sm font-medium text-foreground">{t("tool.icoGenerator.result")}</label>
                 <div className="flex items-center gap-6 flex-wrap">
-                  {ICO_SIZES.map((sz) => (
-                    <div key={sz} className="flex flex-col items-center gap-1">
+                  {sizePreviews.map((p) => (
+                    <div key={p.size} className="flex flex-col items-center gap-1">
                       <img
-                        src={icoUrl}
-                        alt={`${sz}px`}
+                        src={p.dataUrl}
+                        alt={`${p.size}px`}
                         className="rounded border border-border"
-                        style={{ width: Math.min(sz, 64), height: Math.min(sz, 64), imageRendering: "pixelated" }}
+                        style={{ width: Math.min(p.size, 64), height: Math.min(p.size, 64), imageRendering: "pixelated" }}
                       />
-                      <span className="text-xs text-muted-foreground">{sz}×{sz}</span>
+                      <span className="text-xs text-muted-foreground">{p.size}×{p.size}</span>
                     </div>
                   ))}
                 </div>
