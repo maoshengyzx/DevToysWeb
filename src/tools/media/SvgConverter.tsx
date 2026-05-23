@@ -7,6 +7,13 @@ import { ErrorBanner } from "@/components/ui/error-banner"
 
 type OutputFormat = "png" | "jpeg" | "webp"
 
+function sanitizeSvg(svg: string): string {
+  return svg
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/javascript\s*:/gi, "")
+}
+
 export function SvgConverter() {
   const { t } = useLocale()
   const [mode, setMode] = useState<"codeToImage" | "imageToCode">("codeToImage")
@@ -18,13 +25,22 @@ export function SvgConverter() {
   const [decodedCode, setDecodedCode] = useState("")
   const [previewUrl, setPreviewUrl] = useState("")
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const prevObjectUrlRef = useRef<string>("")
+
+  const revokePrev = () => {
+    if (prevObjectUrlRef.current) {
+      URL.revokeObjectURL(prevObjectUrlRef.current)
+      prevObjectUrlRef.current = ""
+    }
+  }
 
   const handleCodeToImage = () => {
     if (!svgCode.trim()) return
     setError("")
     setResultUrl("")
 
-    const blob = new Blob([svgCode], { type: "image/svg+xml" })
+    const cleanSvg = sanitizeSvg(svgCode)
+    const blob = new Blob([cleanSvg], { type: "image/svg+xml" })
     const url = URL.createObjectURL(blob)
     const img = new Image()
     img.onload = () => {
@@ -62,6 +78,7 @@ export function SvgConverter() {
     setError("")
     setDecodedCode("")
     setPreviewUrl("")
+    revokePrev()
 
     const reader = new FileReader()
     reader.onload = () => {
@@ -129,6 +146,7 @@ export function SvgConverter() {
     setDecodedCode("")
     setPreviewUrl("")
     setError("")
+    revokePrev()
   }
 
   return (

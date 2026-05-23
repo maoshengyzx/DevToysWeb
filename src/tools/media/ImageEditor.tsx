@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { useLocale } from "@/i18n/useLocale"
 import type { TranslationKey } from "@/i18n/locales"
@@ -22,6 +22,14 @@ interface FilterState {
 const DEFAULTS: FilterState = {
   brightness: 100, contrast: 100, saturate: 100, blur: 0,
   hueRotate: 0, sepia: 0, grayscale: 0, invert: 0, opacity: 100,
+}
+
+interface EditorSnapshot {
+  filters: FilterState
+  rotation: number
+  flipH: boolean
+  flipV: boolean
+  cropRect: { x: number; y: number; w: number; h: number } | null
 }
 
 const createSliders = (t: (key: TranslationKey) => string): { key: keyof FilterState; label: string; min: number; max: number; step: number; unit: string }[] => [
@@ -81,9 +89,48 @@ export function ImageEditor() {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
   const [displayScale, setDisplayScale] = useState({ x: 1, y: 1 })
+  const [history, setHistory] = useState<EditorSnapshot[]>([])
+  const [historyIdx, setHistoryIdx] = useState(-1)
 
   const previewRef = useRef<HTMLImageElement>(null)
   const imgRef = useRef<HTMLImageElement | null>(null)
+  const prevUrlRef = useRef<string>("")
+
+  const pushSnapshot = useCallback((snap: EditorSnapshot) => {
+    setHistory((prev) => {
+      const trimmed = prev.slice(0, historyIdx + 1)
+      trimmed.push(snap)
+      if (trimmed.length > 20) trimmed.shift()
+      return trimmed
+    })
+    setHistoryIdx((prev) => Math.min(prev + 1, 19))
+  }, [historyIdx])
+
+  const undo = useCallback(() => {
+    if (historyIdx < 0) return
+    const snap = history[historyIdx]
+    setFilters(snap.filters)
+    setRotation(snap.rotation)
+    setFlipH(snap.flipH)
+    setFlipV(snap.flipV)
+    setCropRect(snap.cropRect)
+    setHistoryIdx((prev) => prev - 1)
+  }, [history, historyIdx])
+
+  const redo = useCallback(() => {
+    if (historyIdx >= history.length - 1) return
+    const snap = history[historyIdx + 1]
+    setFilters(snap.filters)
+    setRotation(snap.rotation)
+    setFlipH(snap.flipH)
+    setFlipV(snap.flipV)
+    setCropRect(snap.cropRect)
+    setHistoryIdx((prev) => prev + 1)
+  }, [history, historyIdx])
+
+  const snapCurrent = useCallback(() => {
+    pushSnapshot({ filters, rotation, flipH, flipV, cropRect })
+  }, [filters, rotation, flipH, flipV, cropRect, pushSnapshot])
 
   const loadImage = useCallback((url: string) => {
     const img = new Image()
@@ -98,7 +145,9 @@ export function ImageEditor() {
   }, [])
 
   const handleUpload = useCallback((file: File) => {
+    if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current)
     const url = URL.createObjectURL(file)
+    prevUrlRef.current = url
     setSourceUrl(url)
     setOriginalUrl(url)
     loadImage(url)
@@ -107,6 +156,8 @@ export function ImageEditor() {
     setRotation(0)
     setFlipH(false)
     setFlipV(false)
+    setHistory([])
+    setHistoryIdx(-1)
   }, [loadImage])
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,6 +237,7 @@ export function ImageEditor() {
 
   const handlePointerUp = () => {
     setIsDragging(false)
+    if (cropRect) snapCurrent()
     setDragStart(null)
   }
 
@@ -301,7 +353,9 @@ export function ImageEditor() {
 
   const resetFilters = () => setFilters({ ...DEFAULTS })
 
-  const hasChanges = filters !== DEFAULTS || rotation !== 0 || flipH || flipV || cropRect
+  const hasChanges = useMemo(() => {
+    return JSON.stringify(filters) !== JSON.stringify(DEFAULTS) || rotation !== 0 || flipH || flipV || cropRect !== null
+  }, [filters, rotation, flipH, flipV, cropRect])
 
   if (!sourceUrl) {
     return (
@@ -374,6 +428,13 @@ export function ImageEditor() {
             {label}
           </Button>
         ))}
+        <div className="flex-1" />
+        <Button variant="ghost" size="sm" className="cursor-pointer" disabled={historyIdx < 0} onClick={undo}>
+          ↩
+        </Button>
+        <Button variant="ghost" size="sm" className="cursor-pointer" disabled={historyIdx >= history.length - 1} onClick={redo}>
+          ↪
+        </Button>
       </div>
 
       {tool === "adjust" && (
@@ -392,7 +453,10 @@ export function ImageEditor() {
                   max={max}
                   step={step}
                   value={filters[key]}
-                  onChange={(e) => setFilters({ ...filters, [key]: Number(e.target.value) })}
+                  onChange={(e) => {
+                    snapCurrent()
+                    setFilters({ ...filters, [key]: Number(e.target.value) })
+                  }}
                   className="flex-1 h-1.5 accent-indigo-500 cursor-pointer"
                 />
                 <span className="text-xs tabular-nums w-12 text-right text-muted-foreground">
@@ -417,17 +481,17 @@ export function ImageEditor() {
         <div className="border-b border-border px-4 py-3">
           <span className="text-sm font-medium text-foreground mb-2 block">{t("tool.imageEditor.transform")}</span>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => setRotation((r) => (r + 90) % 360)}>
+            <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => { snapCurrent(); setRotation((r) => (r + 90) % 360) }}>
               <RotateCw className="h-3.5 w-3.5" /> {t("tool.imageEditor.rotateCw")}
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => setRotation((r) => (r - 90 + 360) % 360)}>
+            <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={() => { snapCurrent(); setRotation((r) => (r - 90 + 360) % 360) }}>
               <RotateCcw className="h-3.5 w-3.5" /> {t("tool.imageEditor.rotateCcw")}
             </Button>
             <Button
               variant={flipH ? "default" : "outline"}
               size="sm"
               className="gap-1.5 cursor-pointer"
-              onClick={() => setFlipH((v) => !v)}
+              onClick={() => { snapCurrent(); setFlipH((v) => !v) }}
             >
               <FlipHorizontal className="h-3.5 w-3.5" /> {t("tool.imageEditor.flipH")}
             </Button>
@@ -435,7 +499,7 @@ export function ImageEditor() {
               variant={flipV ? "default" : "outline"}
               size="sm"
               className="gap-1.5 cursor-pointer"
-              onClick={() => setFlipV((v) => !v)}
+              onClick={() => { snapCurrent(); setFlipV((v) => !v) }}
             >
               <FlipVertical className="h-3.5 w-3.5" /> {t("tool.imageEditor.flipV")}
             </Button>

@@ -197,7 +197,7 @@ export function Base64Encoder() {
           <Button variant={mode === "encode" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => handleModeButton("encode")}>{t("tool.base64.encode")}</Button>
           <Button variant={mode === "decode" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => handleModeButton("decode")}>{t("tool.base64.decode")}</Button>
           <div className="w-px h-4 bg-border" />
-          <Button variant={mode === "encode" && tab === "text" ? "default" : "outline"} size="sm" className="cursor-pointer">{t("tool.base64.text")}</Button>
+          <Button variant={mode === "encode" && tab === "text" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setTab("text"); setError(""); }}>{t("tool.base64.text")}</Button>
           <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => { setTab("image"); setError(""); setInput(""); setOutput("") }}>{t("tool.base64.image")}</Button>
           <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => { setTab("file"); setError(""); setInput(""); setOutput("") }}>{t("tool.base64.file")}</Button>
         </div>

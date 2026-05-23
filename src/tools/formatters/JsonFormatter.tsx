@@ -381,6 +381,37 @@ export function JsonFormatter() {
     }
   }, [input, output])
 
+  const [treeSearch, setTreeSearch] = useState("")
+
+  const filteredParsedJson = useMemo(() => {
+    if (!parsedJson || !treeSearch.trim()) return parsedJson
+    const searchLower = treeSearch.toLowerCase()
+    function searchInValue(val: unknown, path: string): unknown {
+      if (typeof val === "string" || typeof val === "number" || typeof val === "boolean" || val === null) {
+        if (String(val).toLowerCase().includes(searchLower)) return val
+        return undefined
+      }
+      if (Array.isArray(val)) {
+        const filtered = val.map((item, i) => searchInValue(item, `${path}[${i}]`)).filter((v) => v !== undefined)
+        return filtered.length > 0 ? filtered : undefined
+      }
+      if (typeof val === "object" && val !== null) {
+        const result: Record<string, unknown> = {}
+        for (const [key, v] of Object.entries(val as Record<string, unknown>)) {
+          if (key.toLowerCase().includes(searchLower)) {
+            result[key] = v
+          } else {
+            const sub = searchInValue(v, `${path}.${key}`)
+            if (sub !== undefined) result[key] = sub
+          }
+        }
+        return Object.keys(result).length > 0 ? result : undefined
+      }
+      return val
+    }
+    return searchInValue(parsedJson, "") || null
+  }, [parsedJson, treeSearch])
+
   const typeStats = useMemo(() => {
     if (!parsedJson) return []
     return getTypeStats(parsedJson)
@@ -540,8 +571,21 @@ export function JsonFormatter() {
                 <LoaderCircle className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : showTree && parsedJson ? (
-              <div className="min-h-[200px] rounded-md border border-input bg-muted px-3 py-2 font-mono text-xs overflow-auto">
-                <JsonTreeNode keyName={null} value={parsedJson} path="data" onCopyPath={handleCopyPath} depth={0} />
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={treeSearch}
+                  onChange={(e) => setTreeSearch(e.target.value)}
+                  placeholder="Search in tree..."
+                  className="h-8 rounded-md border border-input bg-background px-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+                <div className="min-h-[180px] rounded-md border border-input bg-muted px-3 py-2 font-mono text-xs overflow-auto">
+                  {filteredParsedJson ? (
+                    <JsonTreeNode keyName={null} value={filteredParsedJson} path="data" onCopyPath={handleCopyPath} depth={0} />
+                  ) : (
+                    <span className="text-muted-foreground">No matching nodes</span>
+                  )}
+                </div>
               </div>
             ) : showStats && parsedJson ? (
               <div className="min-h-[200px] rounded-md border border-input bg-muted px-3 py-2 text-xs overflow-auto">

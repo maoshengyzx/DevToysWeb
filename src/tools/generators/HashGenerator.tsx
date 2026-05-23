@@ -1,9 +1,8 @@
-import { useState } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { useLocale } from "@/i18n/useLocale"
 import { Textarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 import { Copy, Check } from "lucide-react"
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import md5 from "md5"
 
 const algorithms = ["MD5", "SHA-1", "SHA-256", "SHA-384", "SHA-512"] as const
@@ -18,23 +17,49 @@ async function hashText(text: string, algo: Algorithm): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
 }
 
+const DEBOUNCE_MS = 300
+
 export function HashGenerator() {
   const { t } = useLocale()
   const [input, setInput] = useState("")
   const [results, setResults] = useState<Record<string, string>>({})
-  const [copied, handleCopy] = useCopyToClipboard()
+  const [copiedAlgo, setCopiedAlgo] = useState<string | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const computingRef = useRef(false)
 
-  const handleInputChange = async (value: string) => {
-    setInput(value)
+  const computeHashes = useCallback(async (value: string) => {
     if (!value) {
       setResults({})
       return
     }
+    computingRef.current = true
     const entries = await Promise.all(
       algorithms.map(async (algo) => [algo, await hashText(value, algo)] as const)
     )
-    setResults(Object.fromEntries(entries))
+    if (computingRef.current) {
+      setResults(Object.fromEntries(entries))
+    }
+  }, [])
+
+  const handleInputChange = (value: string) => {
+    setInput(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => computeHashes(value), DEBOUNCE_MS)
   }
+
+  const handleCopy = (algo: string, text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedAlgo(algo)
+      setTimeout(() => setCopiedAlgo(null), 1500)
+    })
+  }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      computingRef.current = false
+    }
+  }, [])
 
   return (
     <div className="flex h-full flex-col">
@@ -59,10 +84,10 @@ export function HashGenerator() {
                     variant="ghost"
                     size="icon"
                     className="shrink-0 cursor-pointer"
-                    onClick={() => results[algo] && handleCopy(results[algo])}
+                    onClick={() => results[algo] && handleCopy(algo, results[algo])}
                     disabled={!results[algo]}
                   >
-                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedAlgo === algo ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                   </Button>
                 </div>
               ))}
