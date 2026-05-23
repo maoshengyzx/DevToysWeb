@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useLocale } from "@/i18n/useLocale"
 import { Textarea, ReadOnlyTextarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
-import { Copy, Check, Trash2 } from "lucide-react"
+import { Copy, Check, Trash2, LoaderCircle } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { html as htmlBeautify, css as cssBeautify, js as jsBeautify } from "js-beautify"
@@ -62,9 +62,13 @@ export function HtmlCssJsFormatter() {
   const [mode, setMode] = useState<"format" | "minify" | "escape" | "unescape">("format")
   const [indent, setIndent] = useState(2)
   const [copied, handleCopy] = useCopyToClipboard()
+  const [processing, setProcessing] = useState(false)
 
-  const handleProcess = async () => {
-    if (!input.trim()) return
+  const isSync = mode !== "minify"
+
+  const handleProcess = useCallback(async () => {
+    if (!input.trim()) { setOutput(""); setError(""); return }
+    if (!isSync) setProcessing(true)
     try {
       let result = ""
       switch (mode) {
@@ -78,14 +82,26 @@ export function HtmlCssJsFormatter() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Processing failed")
       setOutput("")
+    } finally {
+      setProcessing(false)
     }
-  }
+  }, [input, lang, mode, indent, isSync])
+
+  useEffect(() => {
+    if (isSync && input.trim()) {
+      handleProcess()
+    }
+  }, [handleProcess, isSync])
 
   const handleClear = () => {
     setInput("")
     setOutput("")
     setError("")
   }
+
+  const inputBytes = new Blob([input]).size
+  const outputBytes = new Blob([output]).size
+  const savedPercent = inputBytes > 0 ? Math.round((1 - outputBytes / inputBytes) * 100) : 0
 
   return (
     <div className="flex h-full flex-col">
@@ -110,7 +126,7 @@ export function HtmlCssJsFormatter() {
             variant={mode === m ? "default" : "outline"}
             size="sm"
             className="cursor-pointer capitalize"
-            onClick={() => setMode(m)}
+            onClick={() => { setMode(m); setOutput(""); setError("") }}
           >
             {m}
           </Button>
@@ -119,8 +135,8 @@ export function HtmlCssJsFormatter() {
           <>
             <div className="w-px h-4 bg-border mx-1" />
             <span className="text-sm text-muted-foreground">{t("tool.htmlCssJsFormatter.indent")}</span>
-            <Button variant={indent === 2 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => setIndent(2)}>2</Button>
-            <Button variant={indent === 4 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => setIndent(4)}>4</Button>
+            <Button variant={indent === 2 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(2); setOutput(""); setError("") }}>2</Button>
+            <Button variant={indent === 4 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(4); setOutput(""); setError("") }}>4</Button>
           </>
         )}
       </div>
@@ -135,14 +151,33 @@ export function HtmlCssJsFormatter() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">{t("tool.htmlCssJsFormatter.output")}</label>
-            <ReadOnlyTextarea value={output} placeholder="Result will appear here..." />
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-foreground">{t("tool.htmlCssJsFormatter.output")}</label>
+              {mode === "minify" && output && input.trim() && (
+                <span className="text-xs text-muted-foreground">
+                  {outputBytes.toLocaleString()} B
+                  {savedPercent > 0 && <span className="text-green-500 ml-1">(-{savedPercent}%)</span>}
+                </span>
+              )}
+            </div>
+            {processing ? (
+              <div className="flex min-h-[200px] items-center justify-center">
+                <LoaderCircle className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <ReadOnlyTextarea value={output} placeholder="Result will appear here..." />
+            )}
           </div>
         </div>
         {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
         <div className="mt-4 flex gap-2">
-          <Button className="cursor-pointer" onClick={handleProcess}>{t("tool.htmlCssJsFormatter.process")}</Button>
-          <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
+          {!isSync && (
+            <Button className="cursor-pointer" disabled={processing} onClick={handleProcess}>
+              {processing ? <LoaderCircle className="h-4 w-4 animate-spin mr-1" /> : null}
+              {t("tool.htmlCssJsFormatter.process")}
+            </Button>
+          )}
+          <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)} disabled={!output}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? t("shared.copied") : t("shared.copyOutput")}
           </Button>

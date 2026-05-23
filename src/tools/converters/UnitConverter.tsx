@@ -1,12 +1,100 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Copy, Check } from "lucide-react"
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { useLocale } from "@/i18n/useLocale"
 
 type Category = "length" | "weight" | "temperature" | "area" | "volume" | "speed" | "data"
 
 type UnitDef = { label: string; value: number; isBase?: boolean }
+
+type CategoryConfig = { catKey: Category; nameKey: string; units: UnitDef[] }
+
+const UNIT_CONFIGS: CategoryConfig[] = [
+  {
+    catKey: "length",
+    nameKey: "tool.unitConverter.catLength",
+    units: [
+      { label: "Millimeter (mm)", value: 0.001 },
+      { label: "Centimeter (cm)", value: 0.01 },
+      { label: "Meter (m)", value: 1, isBase: true },
+      { label: "Kilometer (km)", value: 1000 },
+      { label: "Inch (in)", value: 0.0254 },
+      { label: "Foot (ft)", value: 0.3048 },
+      { label: "Yard (yd)", value: 0.9144 },
+      { label: "Mile (mi)", value: 1609.344 },
+      { label: "Nautical Mile", value: 1852 },
+    ],
+  },
+  {
+    catKey: "weight",
+    nameKey: "tool.unitConverter.catWeight",
+    units: [
+      { label: "Milligram (mg)", value: 0.000001 },
+      { label: "Gram (g)", value: 0.001 },
+      { label: "Kilogram (kg)", value: 1, isBase: true },
+      { label: "Metric Ton (t)", value: 1000 },
+      { label: "Ounce (oz)", value: 0.0283495 },
+      { label: "Pound (lb)", value: 0.453592 },
+    ],
+  },
+  {
+    catKey: "temperature",
+    nameKey: "tool.unitConverter.catTemperature",
+    units: [
+      { label: "Celsius (°C)", value: 1, isBase: true },
+      { label: "Fahrenheit (°F)", value: 1 },
+      { label: "Kelvin (K)", value: 1 },
+    ],
+  },
+  {
+    catKey: "area",
+    nameKey: "tool.unitConverter.catArea",
+    units: [
+      { label: "mm²", value: 0.000001 },
+      { label: "cm²", value: 0.0001 },
+      { label: "m²", value: 1, isBase: true },
+      { label: "km²", value: 1000000 },
+      { label: "Hectare", value: 10000 },
+      { label: "Acre", value: 4046.86 },
+      { label: "sqft", value: 0.092903 },
+    ],
+  },
+  {
+    catKey: "volume",
+    nameKey: "tool.unitConverter.catVolume",
+    units: [
+      { label: "Milliliter (mL)", value: 0.001 },
+      { label: "Liter (L)", value: 1, isBase: true },
+      { label: "US Gallon", value: 3.78541 },
+      { label: "UK Gallon", value: 4.54609 },
+      { label: "Cubic Meter (m³)", value: 1000 },
+      { label: "Cup (US)", value: 0.236588 },
+    ],
+  },
+  {
+    catKey: "speed",
+    nameKey: "tool.unitConverter.catSpeed",
+    units: [
+      { label: "m/s", value: 1, isBase: true },
+      { label: "km/h", value: 0.277778 },
+      { label: "mph", value: 0.44704 },
+      { label: "knot", value: 0.514444 },
+      { label: "ft/s", value: 0.3048 },
+    ],
+  },
+  {
+    catKey: "data",
+    nameKey: "tool.unitConverter.catData",
+    units: [
+      { label: "Bit", value: 0.125 },
+      { label: "Byte (B)", value: 1, isBase: true },
+      { label: "Kilobyte (KB)", value: 1024 },
+      { label: "Megabyte (MB)", value: 1048576 },
+      { label: "Gigabyte (GB)", value: 1073741824 },
+      { label: "Terabyte (TB)", value: 1099511627776 },
+    ],
+  },
+]
 
 function convertTemperature(value: number, from: string, to: string): number {
   let celsius: number
@@ -28,85 +116,13 @@ function formatNumber(n: number): string {
 export function UnitConverter() {
   const { t } = useLocale()
 
-  const units: Record<Category, { name: string; units: UnitDef[] }> = {
-    length: {
-      name: t("tool.unitConverter.catLength"),
-      units: [
-        { label: "Millimeter (mm)", value: 0.001 },
-        { label: "Centimeter (cm)", value: 0.01 },
-        { label: "Meter (m)", value: 1, isBase: true },
-        { label: "Kilometer (km)", value: 1000 },
-        { label: "Inch (in)", value: 0.0254 },
-        { label: "Foot (ft)", value: 0.3048 },
-        { label: "Yard (yd)", value: 0.9144 },
-        { label: "Mile (mi)", value: 1609.344 },
-        { label: "Nautical Mile", value: 1852 },
-      ],
-    },
-    weight: {
-      name: t("tool.unitConverter.catWeight"),
-      units: [
-        { label: "Milligram (mg)", value: 0.000001 },
-        { label: "Gram (g)", value: 0.001 },
-        { label: "Kilogram (kg)", value: 1, isBase: true },
-        { label: "Metric Ton (t)", value: 1000 },
-        { label: "Ounce (oz)", value: 0.0283495 },
-        { label: "Pound (lb)", value: 0.453592 },
-      ],
-    },
-    temperature: {
-      name: t("tool.unitConverter.catTemperature"),
-      units: [
-        { label: "Celsius (°C)", value: 1, isBase: true },
-        { label: "Fahrenheit (°F)", value: 1 },
-        { label: "Kelvin (K)", value: 1 },
-      ],
-    },
-    area: {
-      name: t("tool.unitConverter.catArea"),
-      units: [
-        { label: "mm²", value: 0.000001 },
-        { label: "cm²", value: 0.0001 },
-        { label: "m²", value: 1, isBase: true },
-        { label: "km²", value: 1000000 },
-        { label: "Hectare", value: 10000 },
-        { label: "Acre", value: 4046.86 },
-        { label: "sqft", value: 0.092903 },
-      ],
-    },
-    volume: {
-      name: t("tool.unitConverter.catVolume"),
-      units: [
-        { label: "Milliliter (mL)", value: 0.001 },
-        { label: "Liter (L)", value: 1, isBase: true },
-        { label: "US Gallon", value: 3.78541 },
-        { label: "UK Gallon", value: 4.54609 },
-        { label: "Cubic Meter (m³)", value: 1000 },
-        { label: "Cup (US)", value: 0.236588 },
-      ],
-    },
-    speed: {
-      name: t("tool.unitConverter.catSpeed"),
-      units: [
-        { label: "m/s", value: 1, isBase: true },
-        { label: "km/h", value: 0.277778 },
-        { label: "mph", value: 0.44704 },
-        { label: "knot", value: 0.514444 },
-        { label: "ft/s", value: 0.3048 },
-      ],
-    },
-    data: {
-      name: t("tool.unitConverter.catData"),
-      units: [
-        { label: "Bit", value: 0.125 },
-        { label: "Byte (B)", value: 1, isBase: true },
-        { label: "Kilobyte (KB)", value: 1024 },
-        { label: "Megabyte (MB)", value: 1048576 },
-        { label: "Gigabyte (GB)", value: 1073741824 },
-        { label: "Terabyte (TB)", value: 1099511627776 },
-      ],
-    },
-  }
+  const units = useMemo(() => {
+    const result: Record<Category, { name: string; units: UnitDef[] }> = {} as Record<Category, { name: string; units: UnitDef[] }>
+    for (const cfg of UNIT_CONFIGS) {
+      result[cfg.catKey] = { name: t(cfg.nameKey as any), units: cfg.units }
+    }
+    return result
+  }, [t])
 
   function doConvert(val: string, from: number, to: number, catKey: Category): string {
     const num = parseFloat(val)
@@ -127,13 +143,13 @@ export function UnitConverter() {
   const [category, setCategory] = useState<Category>("length")
   const [fromUnit, setFromUnit] = useState(2)
   const [fromValue, setFromValue] = useState("1")
-  const [copied, handleCopy] = useCopyToClipboard()
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
 
   const cat = units[category]
 
   const handleCategoryChange = (newCat: Category) => {
-    const newUnits = units[newCat]
-    const baseIdx = newUnits.units.findIndex((u) => u.isBase)
+    const cfg = UNIT_CONFIGS.find((c) => c.catKey === newCat)!
+    const baseIdx = cfg.units.findIndex((u) => u.isBase)
     const from = baseIdx >= 0 ? baseIdx : 0
     setCategory(newCat)
     setFromUnit(from)
@@ -213,9 +229,13 @@ export function UnitConverter() {
                         variant="ghost"
                         size="icon"
                         className="shrink-0 h-7 w-7 cursor-pointer"
-                        onClick={() => handleCopy(result)}
+                        onClick={() => {
+                          navigator.clipboard.writeText(result)
+                          setCopiedIdx(i)
+                          setTimeout(() => setCopiedIdx(null), 1500)
+                        }}
                       >
-                        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                        {copiedIdx === i ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                       </Button>
                     )}
                   </div>

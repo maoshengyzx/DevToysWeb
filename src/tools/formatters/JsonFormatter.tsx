@@ -1,11 +1,16 @@
-import { useState, useMemo, useCallback } from "react"
+import { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { useLocale } from "@/i18n/useLocale"
 import { Textarea, ReadOnlyTextarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
-import { Copy, Check, Trash2, Braces, FileCode, Link, ArrowDownUp, Layers } from "lucide-react"
+import { Copy, Check, Trash2, Braces, FileCode, Link, ArrowDownUp, Layers, LoaderCircle } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { flatten as flatFlatten, unflatten as flatUnflatten } from "flat"
+
+const MAX_AUTO_SIZE = 200 * 1024
+const TREE_MAX_DEPTH = 6
+const TREE_MAX_ENTRIES = 50
+const DEBOUNCE_MS = 400
 
 function smartRepair(input: string): { json: unknown; fixes: string[] } | null {
   let fixed = input
@@ -176,6 +181,8 @@ function JsonTreeNode({ keyName, value, path, onCopyPath, depth }: TreeNodeProps
 
   const currentPath = keyName !== null ? (depth === 0 ? keyName : `${path}.${keyName}`) : path
 
+  const isCollapsed = depth >= TREE_MAX_DEPTH
+
   if (value === null) {
     return (
       <div
@@ -235,7 +242,7 @@ function JsonTreeNode({ keyName, value, path, onCopyPath, depth }: TreeNodeProps
         {keyName !== null && <span className="text-primary">{keyName}</span>}
         {keyName !== null && <span className="text-muted-foreground">: </span>}
         <span className="text-amber-600">{String(value)}</span>
-        {ts && <span className="ml-1.5 text-[11px] text-muted-foreground/60">📅 {ts}</span>}
+        {ts && <span className="ml-1.5 text-[11px] text-muted-foreground/60">{ts}</span>}
       </div>
     )
   }
@@ -258,7 +265,7 @@ function JsonTreeNode({ keyName, value, path, onCopyPath, depth }: TreeNodeProps
         {keyName !== null && <span className="text-primary">{keyName}</span>}
         {keyName !== null && <span className="text-muted-foreground">: </span>}
         <span className="text-green-600">&quot;{value}&quot;</span>
-        {ts && <span className="ml-1.5 text-[11px] text-muted-foreground/60">📅 {ts}</span>}
+        {ts && <span className="ml-1.5 text-[11px] text-muted-foreground/60">{ts}</span>}
       </div>
     )
   }
@@ -282,7 +289,7 @@ function JsonTreeNode({ keyName, value, path, onCopyPath, depth }: TreeNodeProps
           {keyName !== null && <span className="text-muted-foreground">: </span>}
           <span className="text-muted-foreground">[{value.length}]</span>
         </div>
-        {value.map((item, i) => (
+        {!isCollapsed && value.slice(0, TREE_MAX_ENTRIES).map((item, i) => (
           <JsonTreeNode
             key={i}
             keyName={String(i)}
@@ -292,6 +299,12 @@ function JsonTreeNode({ keyName, value, path, onCopyPath, depth }: TreeNodeProps
             depth={depth + 1}
           />
         ))}
+        {!isCollapsed && value.length > TREE_MAX_ENTRIES && (
+          <div className="py-0.5 pl-6 text-xs text-muted-foreground">... {value.length - TREE_MAX_ENTRIES} more items</div>
+        )}
+        {isCollapsed && value.length > 0 && (
+          <div className="py-0.5 pl-6 text-xs text-muted-foreground">... {value.length} items (depth limit reached)</div>
+        )}
       </div>
     )
   }
@@ -316,7 +329,7 @@ function JsonTreeNode({ keyName, value, path, onCopyPath, depth }: TreeNodeProps
           {keyName !== null && <span className="text-muted-foreground">: </span>}
           <span className="text-muted-foreground">{`{${entries.length}}`}</span>
         </div>
-        {entries.map(([k, v]) => (
+        {!isCollapsed && entries.slice(0, TREE_MAX_ENTRIES).map(([k, v]) => (
           <JsonTreeNode
             key={k}
             keyName={k}
@@ -326,6 +339,12 @@ function JsonTreeNode({ keyName, value, path, onCopyPath, depth }: TreeNodeProps
             depth={depth + 1}
           />
         ))}
+        {!isCollapsed && entries.length > TREE_MAX_ENTRIES && (
+          <div className="py-0.5 pl-6 text-xs text-muted-foreground">... {entries.length - TREE_MAX_ENTRIES} more keys</div>
+        )}
+        {isCollapsed && entries.length > 0 && (
+          <div className="py-0.5 pl-6 text-xs text-muted-foreground">... {entries.length} keys (depth limit reached)</div>
+        )}
       </div>
     )
   }
@@ -341,45 +360,99 @@ export function JsonFormatter() {
   const [indent, setIndent] = useState(2)
   const [showTree, setShowTree] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const [processing, setProcessing] = useState(false)
   const [copied, handleCopy] = useCopyToClipboard()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const parsedRef = useRef<unknown>(null)
 
   const { t } = useLocale()
 
+  const isLarge = input.length > MAX_AUTO_SIZE
+
   const parsedJson = useMemo(() => {
-    if (!input.trim()) return null
+    if (!input.trim()) { parsedRef.current = null; return null }
     try {
-      return JSON.parse(output || input)
+      const obj = JSON.parse(output || input)
+      parsedRef.current = obj
+      return obj
     } catch {
+      parsedRef.current = null
       return null
     }
   }, [input, output])
+
+  const [treeSearch, setTreeSearch] = useState("")
+
+  const filteredParsedJson = useMemo(() => {
+    if (!parsedJson || !treeSearch.trim()) return parsedJson
+    const searchLower = treeSearch.toLowerCase()
+    function searchInValue(val: unknown, path: string): unknown {
+      if (typeof val === "string" || typeof val === "number" || typeof val === "boolean" || val === null) {
+        if (String(val).toLowerCase().includes(searchLower)) return val
+        return undefined
+      }
+      if (Array.isArray(val)) {
+        const filtered = val.map((item, i) => searchInValue(item, `${path}[${i}]`)).filter((v) => v !== undefined)
+        return filtered.length > 0 ? filtered : undefined
+      }
+      if (typeof val === "object" && val !== null) {
+        const result: Record<string, unknown> = {}
+        for (const [key, v] of Object.entries(val as Record<string, unknown>)) {
+          if (key.toLowerCase().includes(searchLower)) {
+            result[key] = v
+          } else {
+            const sub = searchInValue(v, `${path}.${key}`)
+            if (sub !== undefined) result[key] = sub
+          }
+        }
+        return Object.keys(result).length > 0 ? result : undefined
+      }
+      return val
+    }
+    return searchInValue(parsedJson, "") || null
+  }, [parsedJson, treeSearch])
 
   const typeStats = useMemo(() => {
     if (!parsedJson) return []
     return getTypeStats(parsedJson)
   }, [parsedJson])
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
+
   const applyAction = useCallback((action: (parsed: unknown) => string) => {
     if (!input.trim()) return
-    try {
-      const result = smartRepair(input)
-      const json = result ? result.json : JSON.parse(input)
-      const out = action(json)
-      setOutput(out)
-      setError("")
-      if (result) setFixes(result.fixes)
-      else setFixes([])
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Operation failed")
-      setOutput("")
-    }
+    setProcessing(true)
+    setTimeout(() => {
+      try {
+        const result = smartRepair(input)
+        const json = result ? result.json : JSON.parse(input)
+        const out = action(json)
+        setOutput(out)
+        setError("")
+        if (result) setFixes(result.fixes)
+        else setFixes([])
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Operation failed")
+        setOutput("")
+      } finally {
+        setProcessing(false)
+      }
+    }, 0)
   }, [input])
 
-  const handleInputChange = useCallback((value: string) => {
-    setInput(value)
+  const processInput = useCallback((value: string) => {
     setFixes([])
     if (!value.trim()) { setOutput(""); setError(""); return }
     try {
+      if (isLarge) {
+        setError("Large JSON detected. Auto-format disabled. Click a button below to format.")
+        setOutput("")
+        return
+      }
       const result = smartRepair(value)
       if (result) {
         setOutput(JSON.stringify(result.json, null, indent))
@@ -394,9 +467,16 @@ export function JsonFormatter() {
       setError(e instanceof Error ? e.message : "Invalid JSON")
       setOutput("")
     }
-  }, [indent])
+  }, [indent, isLarge])
 
-  const handleClear = () => { setInput(""); setOutput(""); setError(""); setFixes([]) }
+  const handleInputChange = useCallback((value: string) => {
+    setInput(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!value.trim()) { setOutput(""); setError(""); setFixes([]); return }
+    debounceRef.current = setTimeout(() => processInput(value), DEBOUNCE_MS)
+  }, [processInput])
+
+  const handleClear = () => { setInput(""); setOutput(""); setError(""); setFixes([]); setProcessing(false) }
   const handleCopyAsJsVar = () => { try { handleCopy(toJsonVariable(output || input, indent)) } catch { /* already validated */ } }
   const handleCopyAsUrlParams = () => { try { handleCopy(toUrlParams(output || input)) } catch (e) { setError(e instanceof Error ? e.message : "Cannot convert to URL params") } }
   const handleCopyPath = (path: string) => { handleCopy(path) }
@@ -407,47 +487,65 @@ export function JsonFormatter() {
   const handleStructure = () => applyAction((obj) => extractStructure(JSON.stringify(obj), indent))
   const handleToMdTable = () => {
     if (!input.trim()) return
-    try {
-      const result = smartRepair(input)
-      const json = result ? result.json : JSON.parse(input)
-      if (!Array.isArray(json)) throw new Error("Input must be a JSON array of objects")
-      const md = toJsonMarkdownTable(JSON.stringify(json))
-      setOutput(md)
-      setError("")
-      if (result) setFixes(result.fixes)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Cannot convert to Markdown table")
-      setOutput("")
-    }
+    setProcessing(true)
+    setTimeout(() => {
+      try {
+        const result = smartRepair(input)
+        const json = result ? result.json : JSON.parse(input)
+        if (!Array.isArray(json)) throw new Error("Input must be a JSON array of objects")
+        const md = toJsonMarkdownTable(JSON.stringify(json))
+        setOutput(md)
+        setError("")
+        if (result) setFixes(result.fixes)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Cannot convert to Markdown table")
+        setOutput("")
+      } finally {
+        setProcessing(false)
+      }
+    }, 0)
   }
   const handleFromMdTable = () => {
     if (!input.trim()) return
-    try {
-      const json = markdownTableToJson(input)
-      setOutput(json)
-      setError("")
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Cannot parse Markdown table")
-      setOutput("")
-    }
+    setProcessing(true)
+    setTimeout(() => {
+      try {
+        const json = markdownTableToJson(input)
+        setOutput(json)
+        setError("")
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Cannot parse Markdown table")
+        setOutput("")
+      } finally {
+        setProcessing(false)
+      }
+    }, 0)
   }
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-border px-6 py-3 flex-wrap">
         <span className="text-sm text-muted-foreground">{t("tool.jsonFormat.indent")}</span>
-        <Button variant={indent === 2 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(2); if (input.trim() && !error) setOutput(formatJson(input, 2)) }}>2</Button>
-        <Button variant={indent === 4 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(4); if (input.trim() && !error) setOutput(formatJson(input, 4)) }}>4</Button>
-        <Button variant={indent === 1 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(1); if (input.trim() && !error) setOutput(formatJson(input, 1)) }}>Tab</Button>
+        <Button variant={indent === 2 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(2) }}>2</Button>
+        <Button variant={indent === 4 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(4) }}>4</Button>
+        <Button variant={indent === 1 ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => { setIndent(1) }}>Tab</Button>
         {error && <ErrorBanner message={error} />}
         {fixes.length > 0 && !error && (
           <span className="ml-auto text-xs text-green-500">{t("tool.jsonFormat.autoFixed")}{fixes.join(", ")}</span>
         )}
       </div>
       <div className="flex-1 overflow-auto p-6">
+        {isLarge && input.length > 0 && !error && (
+          <div className="mb-3 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-600 dark:text-yellow-400">
+            Large JSON ({Math.round(input.length / 1024)} KB). Auto-format disabled for performance. Click a button below to format.
+          </div>
+        )}
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">{t("tool.jsonFormat.input")}</label>
+            <div className="flex items-center justify-between min-h-[36px]">
+              <label className="text-sm font-medium text-foreground">{t("tool.jsonFormat.input")}</label>
+              <div />
+            </div>
             <Textarea
               value={input}
               onChange={(e) => handleInputChange(e.target.value)}
@@ -455,7 +553,7 @@ export function JsonFormatter() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between min-h-[36px]">
               <label className="text-sm font-medium text-foreground">{t("tool.jsonFormat.output")}</label>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="sm" className={`gap-1 cursor-pointer ${showTree ? "text-primary" : "text-muted-foreground"}`} onClick={() => { setShowTree(!showTree); setShowStats(false) }}>
@@ -468,9 +566,26 @@ export function JsonFormatter() {
                 </Button>
               </div>
             </div>
-            {showTree && parsedJson ? (
-              <div className="min-h-[200px] rounded-md border border-input bg-muted px-3 py-2 font-mono text-xs overflow-auto">
-                <JsonTreeNode keyName={null} value={parsedJson} path="data" onCopyPath={handleCopyPath} depth={0} />
+            {processing ? (
+              <div className="flex min-h-[200px] items-center justify-center">
+                <LoaderCircle className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : showTree && parsedJson ? (
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={treeSearch}
+                  onChange={(e) => setTreeSearch(e.target.value)}
+                  placeholder="Search in tree..."
+                  className="h-8 rounded-md border border-input bg-background px-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+                <div className="min-h-[180px] rounded-md border border-input bg-muted px-3 py-2 font-mono text-xs overflow-auto">
+                  {filteredParsedJson ? (
+                    <JsonTreeNode keyName={null} value={filteredParsedJson} path="data" onCopyPath={handleCopyPath} depth={0} />
+                  ) : (
+                    <span className="text-muted-foreground">No matching nodes</span>
+                  )}
+                </div>
               </div>
             ) : showStats && parsedJson ? (
               <div className="min-h-[200px] rounded-md border border-input bg-muted px-3 py-2 text-xs overflow-auto">
@@ -489,41 +604,41 @@ export function JsonFormatter() {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button className="cursor-pointer" onClick={() => applyAction((obj) => JSON.stringify(obj, null, indent))}>{t("tool.jsonFormat.format")}</Button>
-          <Button variant="outline" className="cursor-pointer" onClick={() => applyAction((obj) => JSON.stringify(obj))}>{t("tool.jsonFormat.minify")}</Button>
-          <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleSortKeys}>
+          <Button className="cursor-pointer" disabled={processing} onClick={() => applyAction((obj) => JSON.stringify(obj, null, indent))}>{t("tool.jsonFormat.format")}</Button>
+          <Button variant="outline" className="cursor-pointer" disabled={processing} onClick={() => applyAction((obj) => JSON.stringify(obj))}>{t("tool.jsonFormat.minify")}</Button>
+          <Button variant="outline" className="gap-1.5 cursor-pointer" disabled={processing} onClick={handleSortKeys}>
             <ArrowDownUp className="h-3.5 w-3.5" />
             {t("tool.jsonFormat.sortKeys")}
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleFlatten}>
+          <Button variant="outline" size="sm" className="cursor-pointer" disabled={processing} onClick={handleFlatten}>
             {t("tool.jsonFormat.flatten")}
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleUnflatten}>
+          <Button variant="outline" size="sm" className="cursor-pointer" disabled={processing} onClick={handleUnflatten}>
             {t("tool.jsonFormat.unflatten")}
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleStructure}>
+          <Button variant="outline" size="sm" className="cursor-pointer" disabled={processing} onClick={handleStructure}>
             {t("tool.jsonFormat.structure")}
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleToMdTable}>
+          <Button variant="outline" size="sm" className="cursor-pointer" disabled={processing} onClick={handleToMdTable}>
             {t("tool.jsonFormat.toMdTable")}
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleFromMdTable}>
+          <Button variant="outline" size="sm" className="cursor-pointer" disabled={processing} onClick={handleFromMdTable}>
             {t("tool.jsonFormat.fromMdTable")}
           </Button>
           <div className="w-px h-6 bg-border self-center" />
-          <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
+          <Button variant="outline" className="gap-1.5 cursor-pointer" disabled={processing} onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? t("shared.copied") : t("shared.copy")}
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleCopyAsJsVar} disabled={!output}>
+          <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" disabled={processing || !output} onClick={handleCopyAsJsVar}>
             <FileCode className="h-3.5 w-3.5" />
             {t("tool.jsonFormat.copyAsJs")}
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" onClick={handleCopyAsUrlParams} disabled={!output}>
+          <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer" disabled={processing || !output} onClick={handleCopyAsUrlParams}>
             <Link className="h-3.5 w-3.5" />
             {t("tool.jsonFormat.copyAsParams")}
           </Button>
-          <Button variant="ghost" className="gap-1.5 cursor-pointer ml-auto" onClick={handleClear}>
+          <Button variant="ghost" className="gap-1.5 cursor-pointer ml-auto" disabled={processing} onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
             {t("tool.jsonFormat.clear")}
           </Button>

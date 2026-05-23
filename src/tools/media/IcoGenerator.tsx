@@ -1,14 +1,15 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { useLocale } from "@/i18n/useLocale"
 import { Download, Upload, X } from "lucide-react"
 import { ErrorBanner } from "@/components/ui/error-banner"
 
+const ICO_SIZES = [16, 32, 48, 64, 128, 256]
+
 function createIcoFromImage(img: HTMLImageElement): Blob {
-  const sizes = [16, 32]
   const iconData: { data: Uint8Array; size: number }[] = []
 
-  for (const size of sizes) {
+  for (const size of ICO_SIZES) {
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
@@ -35,8 +36,8 @@ function createIcoFromImage(img: HTMLImageElement): Blob {
 
   iconData.forEach((icon, i) => {
     const dirOffset = headerSize + i * dirEntrySize
-    view.setUint8(dirOffset, icon.size)
-    view.setUint8(dirOffset + 1, icon.size)
+    view.setUint8(dirOffset, icon.size === 256 ? 0 : icon.size)
+    view.setUint8(dirOffset + 1, icon.size === 256 ? 0 : icon.size)
     view.setUint8(dirOffset + 2, 0)
     view.setUint8(dirOffset + 3, 0)
     view.setUint16(dirOffset + 4, 1, true)
@@ -56,28 +57,36 @@ export function IcoGenerator() {
   const [icoUrl, setIcoUrl] = useState("")
   const [error, setError] = useState("")
   const [generating, setGenerating] = useState(false)
+  const prevUrlRef = useRef<string>("")
 
   const processFile = useCallback((file: File) => {
     setError("")
     setIcoUrl("")
     setPreviewUrl("")
+    if (prevUrlRef.current) {
+      URL.revokeObjectURL(prevUrlRef.current)
+      prevUrlRef.current = ""
+    }
 
     const url = URL.createObjectURL(file)
+    prevUrlRef.current = url
     setPreviewUrl(url)
 
     const img = new Image()
     img.crossOrigin = "anonymous"
     img.onload = () => {
       setGenerating(true)
-      try {
-        const blob = createIcoFromImage(img)
-        const icoObjUrl = URL.createObjectURL(blob)
-        setIcoUrl(icoObjUrl)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to generate ICO")
-      } finally {
-        setGenerating(false)
-      }
+      setTimeout(() => {
+        try {
+          const blob = createIcoFromImage(img)
+          const icoObjUrl = URL.createObjectURL(blob)
+          setIcoUrl(icoObjUrl)
+        } catch (e) {
+          setError(e instanceof Error ? e.message : "Failed to generate ICO")
+        } finally {
+          setGenerating(false)
+        }
+      }, 0)
     }
     img.onerror = () => {
       setError("Failed to load image")
@@ -121,6 +130,10 @@ export function IcoGenerator() {
     setIcoUrl("")
     setError("")
     setGenerating(false)
+    if (prevUrlRef.current) {
+      URL.revokeObjectURL(prevUrlRef.current)
+      prevUrlRef.current = ""
+    }
   }
 
   return (
@@ -164,15 +177,18 @@ export function IcoGenerator() {
             {icoUrl ? (
               <div className="flex flex-col gap-4">
                 <label className="text-sm font-medium text-foreground">{t("tool.icoGenerator.result")}</label>
-                <div className="flex items-center gap-6">
-                  <div className="flex flex-col items-center gap-1">
-                    <img src={icoUrl} alt="16px" className="h-4 w-4 rounded border border-border" style={{ imageRendering: "pixelated" }} />
-                    <span className="text-xs text-muted-foreground">16×16</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <img src={icoUrl} alt="32px" className="h-8 w-8 rounded border border-border" />
-                    <span className="text-xs text-muted-foreground">32×32</span>
-                  </div>
+                <div className="flex items-center gap-6 flex-wrap">
+                  {ICO_SIZES.map((sz) => (
+                    <div key={sz} className="flex flex-col items-center gap-1">
+                      <img
+                        src={icoUrl}
+                        alt={`${sz}px`}
+                        className="rounded border border-border"
+                        style={{ width: Math.min(sz, 64), height: Math.min(sz, 64), imageRendering: "pixelated" }}
+                      />
+                      <span className="text-xs text-muted-foreground">{sz}×{sz}</span>
+                    </div>
+                  ))}
                 </div>
                 {previewUrl && (
                   <div className="flex flex-col items-start gap-2">

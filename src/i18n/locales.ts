@@ -553,6 +553,11 @@ const en = {
   "tool.textDiff.modifiedPlaceholder": "Paste modified text...",
   "tool.textDiff.removed": "Removed",
   "tool.textDiff.added": "Added",
+  "tool.textDiff.mode": "Mode",
+  "tool.textDiff.lines": "Lines",
+  "tool.textDiff.words": "Words",
+  "tool.textDiff.chars": "Chars",
+  "tool.textDiff.copyDiff": "Copy Diff",
 
   "tool.jsonDiff.leftOld": "Left (Old)",
   "tool.jsonDiff.rightNew": "Right (New)",
@@ -1121,6 +1126,11 @@ const zh: Record<TranslationKey, string> = {
   "tool.textDiff.modifiedPlaceholder": "粘贴修改后文本...",
   "tool.textDiff.removed": "移除",
   "tool.textDiff.added": "新增",
+  "tool.textDiff.mode": "模式",
+  "tool.textDiff.lines": "行",
+  "tool.textDiff.words": "词",
+  "tool.textDiff.chars": "字符",
+  "tool.textDiff.copyDiff": "复制差异",
 
   "tool.jsonDiff.leftOld": "左侧（旧）",
   "tool.jsonDiff.rightNew": "右侧（新）",

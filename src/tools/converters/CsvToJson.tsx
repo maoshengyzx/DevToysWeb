@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Textarea, ReadOnlyTextarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, ArrowDownUp, Trash2, Upload } from "lucide-react"
@@ -150,7 +150,7 @@ export function CsvToJson() {
   const [typedInference, setTypedInference] = useState(false)
   const [dropError, setDropError] = useState("")
 
-  const { output, error } = convert(input, mode, typedInference)
+  const { output, error } = useMemo(() => convert(input, mode, typedInference), [input, mode, typedInference])
   const displayError = dropError || error
 
   const handleSwap = () => {
@@ -237,7 +237,6 @@ export function CsvToJson() {
       >
         <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
         <span className="text-sm text-muted-foreground">Drop a .csv or .json file here, or <span className="text-primary underline underline-offset-2 cursor-pointer">browse</span> to upload</span>
-        <input type="file" accept=".csv,.json,text/csv,application/json" className="hidden" onChange={handleFileUpload} id="csv-json-file-input" />
       </div>
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
