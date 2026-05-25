@@ -154,7 +154,7 @@ export function HtmlCssJsFormatter() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between min-h-[36px]">
               <label className="text-sm font-medium text-foreground">{t("tool.htmlCssJsFormatter.output")}</label>
               {mode === "minify" && output && input.trim() && (
                 <span className="text-xs text-muted-foreground">

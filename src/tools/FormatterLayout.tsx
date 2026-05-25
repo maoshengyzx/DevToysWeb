@@ -42,16 +42,6 @@ export function Formatter({
     }
   }
 
-  const handleFormat = () => {
-    if (!input.trim()) return
-    try {
-      setOutput(format(input, indent))
-      setError("")
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Format failed")
-    }
-  }
-
   const handleMinify = () => {
     if (!input.trim() || !minify) return
     try {
@@ -120,7 +110,6 @@ export function Formatter({
           </div>
         </div>
         <div className="mt-4 flex gap-2">
-          <Button className="cursor-pointer" onClick={handleFormat}>{t("shared.format")}</Button>
           {minify && (
             <Button variant="outline" className="cursor-pointer" onClick={handleMinify}>{t("shared.minify")}</Button>
           )}

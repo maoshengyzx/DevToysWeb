@@ -9,24 +9,30 @@ const ICO_SIZES = [16, 32, 48, 64, 128, 256]
 interface SizePreview {
   size: number
   dataUrl: string
+  pngData: Uint8Array
 }
 
-function generateIco(img: HTMLImageElement): { blob: Blob; previews: SizePreview[] } {
+function generateIco(img: HTMLImageElement, sizes?: number[]): { blob: Blob; previews: SizePreview[] } {
+  const targetSizes = sizes ?? ICO_SIZES
   const iconData: { data: Uint8Array; size: number }[] = []
   const previews: SizePreview[] = []
 
-  for (const size of ICO_SIZES) {
+  for (const size of targetSizes) {
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
     const ctx = canvas.getContext("2d")!
+    if (size >= 32) {
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = "high"
+    }
     ctx.clearRect(0, 0, size, size)
     ctx.drawImage(img, 0, 0, size, size)
     const dataUrl = canvas.toDataURL("image/png")
-    previews.push({ size, dataUrl })
     const binaryStr = atob(dataUrl.split(",")[1])
     const data = new Uint8Array(binaryStr.length)
     for (let i = 0; i < binaryStr.length; i++) data[i] = binaryStr.charCodeAt(i)
+    previews.push({ size, dataUrl, pngData: data })
     iconData.push({ data, size })
   }
 
@@ -60,6 +66,20 @@ function generateIco(img: HTMLImageElement): { blob: Blob; previews: SizePreview
   return { blob: new Blob([buffer], { type: "image/x-icon" }), previews }
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function downloadPng(pngData: Uint8Array, size: number) {
+  const blob = new Blob([pngData.buffer as ArrayBuffer], { type: "image/png" })
+  downloadBlob(blob, `icon-${size}x${size}.png`)
+}
+
 export function IcoGenerator() {
   const { t } = useLocale()
   const [previewUrl, setPreviewUrl] = useState("")
@@ -67,14 +87,17 @@ export function IcoGenerator() {
   const [sizePreviews, setSizePreviews] = useState<SizePreview[]>([])
   const [error, setError] = useState("")
   const [generating, setGenerating] = useState(false)
+  const [selectedSize, setSelectedSize] = useState<number | null>(null)
   const prevUrlRef = useRef<string>("")
   const icoUrlRef = useRef<string>("")
+  const sourceImgRef = useRef<HTMLImageElement | null>(null)
 
   const processFile = useCallback((file: File) => {
     setError("")
     setIcoUrl("")
     setSizePreviews([])
     setPreviewUrl("")
+    setSelectedSize(null)
     if (prevUrlRef.current) {
       URL.revokeObjectURL(prevUrlRef.current)
       prevUrlRef.current = ""
@@ -91,6 +114,7 @@ export function IcoGenerator() {
     const img = new Image()
     img.crossOrigin = "anonymous"
     img.onload = () => {
+      sourceImgRef.current = img
       setGenerating(true)
       setTimeout(() => {
         try {
@@ -99,6 +123,7 @@ export function IcoGenerator() {
           icoUrlRef.current = icoObjUrl
           setIcoUrl(icoObjUrl)
           setSizePreviews(previews)
+          setSelectedSize(64)
         } catch (e) {
           setError(e instanceof Error ? e.message : "Failed to generate ICO")
         } finally {
@@ -143,12 +168,25 @@ export function IcoGenerator() {
     a.click()
   }
 
+  const handleDownloadSingleSize = (preview: SizePreview) => {
+    const img = sourceImgRef.current
+    if (!img) return
+    const { blob } = generateIco(img, [preview.size])
+    downloadBlob(blob, `icon-${preview.size}x${preview.size}.ico`)
+  }
+
+  const handleDownloadPng = (preview: SizePreview) => {
+    downloadPng(preview.pngData, preview.size)
+  }
+
   const clearAll = () => {
     setPreviewUrl("")
     setIcoUrl("")
     setSizePreviews([])
     setError("")
     setGenerating(false)
+    setSelectedSize(null)
+    sourceImgRef.current = null
     if (prevUrlRef.current) {
       URL.revokeObjectURL(prevUrlRef.current)
       prevUrlRef.current = ""
@@ -169,14 +207,14 @@ export function IcoGenerator() {
               <div />
             </div>
             <div
-              className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-12 transition-colors duration-150 cursor-pointer min-h-[240px] ${previewUrl ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/50"}`}
+              className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-6 transition-colors duration-150 cursor-pointer min-h-[320px] ${previewUrl ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/50"}`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onClick={() => document.getElementById("ico-file-input")?.click()}
             >
               {previewUrl ? (
                 <div className="relative">
-                  <img src={previewUrl} alt="Source" className="max-h-48 rounded-md object-contain" />
+                  <img src={previewUrl} alt="Source" className="max-h-64 rounded-md object-contain" />
                   <button
                     className="absolute -right-2 -top-2 rounded-full bg-destructive text-white p-0.5 hover:bg-destructive/80"
                     onClick={(e) => { e.stopPropagation(); clearAll(); }}
@@ -207,10 +245,14 @@ export function IcoGenerator() {
             </div>
             {error && <ErrorBanner message={error} />}
             {icoUrl ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-6 flex-wrap">
+              <div className="flex flex-col gap-4 min-h-[320px]">
+                <div className="flex items-center gap-4 flex-wrap">
                   {sizePreviews.map((p) => (
-                    <div key={p.size} className="flex flex-col items-center gap-1">
+                    <button
+                      key={p.size}
+                      className={`flex flex-col items-center gap-1 rounded-md p-1.5 cursor-pointer transition-colors border ${selectedSize === p.size ? "border-primary bg-primary/10" : "border-transparent hover:border-border hover:bg-muted/50"}`}
+                      onClick={() => setSelectedSize(selectedSize === p.size ? null : p.size)}
+                    >
                       <img
                         src={p.dataUrl}
                         alt={`${p.size}px`}
@@ -218,28 +260,49 @@ export function IcoGenerator() {
                         style={{ width: Math.min(p.size, 64), height: Math.min(p.size, 64), imageRendering: "pixelated" }}
                       />
                       <span className="text-xs text-muted-foreground">{p.size}×{p.size}</span>
-                    </div>
+                    </button>
                   ))}
                 </div>
-                {previewUrl && (
-                  <div className="flex flex-col items-start gap-2">
-                    <span className="text-xs text-muted-foreground">{t("tool.icoGenerator.previewAtSize")}</span>
-                    <div className="rounded-md border border-border p-4 bg-muted/50 flex items-center justify-center">
-                      <img src={previewUrl} alt="Preview" className="h-16 w-16 object-contain" />
-                    </div>
+                {selectedSize && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Download {selectedSize}×{selectedSize} as:</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 cursor-pointer"
+                      onClick={() => {
+                        const p = sizePreviews.find((s) => s.size === selectedSize)
+                        if (p) handleDownloadSingleSize(p)
+                      }}
+                    >
+                      <Download className="h-3 w-3" />
+                      ICO
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 cursor-pointer"
+                      onClick={() => {
+                        const p = sizePreviews.find((s) => s.size === selectedSize)
+                        if (p) handleDownloadPng(p)
+                      }}
+                    >
+                      <Download className="h-3 w-3" />
+                      PNG
+                    </Button>
                   </div>
                 )}
-                <Button variant="outline" className="gap-1.5 cursor-pointer w-fit" onClick={handleDownload}>
+                <Button variant="default" className="gap-1.5 cursor-pointer w-fit" onClick={handleDownload}>
                   <Download className="h-3.5 w-3.5" />
                   {t("tool.icoGenerator.downloadIco")}
                 </Button>
               </div>
             ) : generating ? (
-              <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
+              <div className="flex items-center justify-center min-h-[320px] text-sm text-muted-foreground">
                 {t("tool.icoGenerator.generating")}
               </div>
             ) : !error && (
-              <div className="flex items-center justify-center h-[200px] rounded-md border border-dashed border-border text-sm text-muted-foreground">
+              <div className="flex items-center justify-center min-h-[320px] rounded-md border border-dashed border-border text-sm text-muted-foreground">
                 {t("tool.icoGenerator.emptyHint")}
               </div>
             )}
