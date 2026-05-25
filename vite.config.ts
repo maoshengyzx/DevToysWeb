@@ -5,7 +5,7 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite"
 
-const baseUrl = "https://devtoysweb.pages.dev"
+const baseUrl = "https://devtoysweb.cn"
 
 const toolIds = [
   "number-base", "json-yaml", "json-to-typescript", "unit-converter", "sql-to-entity", "csv-to-json",

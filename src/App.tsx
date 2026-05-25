@@ -344,11 +344,11 @@ function App() {
         <title>{seoMeta?.title ?? "DevToysWeb"}</title>
         <meta name="description" content={seoMeta?.description ?? "Online developer tools"} />
         <meta name="keywords" content={seoMeta?.keywords ?? "developer tools"} />
-        <link rel="canonical" href={`https://devtoysweb.pages.dev${activeToolId ? `/${activeToolId}` : ""}`} />
+        <link rel="canonical" href={`https://devtoysweb.cn${activeToolId ? `/${activeToolId}` : ""}`} />
         <meta property="og:title" content={seoMeta?.title ?? "DevToysWeb"} />
         <meta property="og:description" content={seoMeta?.description ?? "Online developer tools collection"} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={`https://devtoysweb.pages.dev${activeToolId ? `/${activeToolId}` : ""}`} />
+        <meta property="og:url" content={`https://devtoysweb.cn${activeToolId ? `/${activeToolId}` : ""}`} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={seoMeta?.title ?? "DevToysWeb"} />
         <meta name="twitter:description" content={seoMeta?.description ?? "Online developer tools collection"} />
