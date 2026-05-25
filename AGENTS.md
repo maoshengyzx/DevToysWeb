@@ -36,6 +36,8 @@ These are enforced and will fail build or lint:
 - **`erasableSyntaxOnly`** — `enum` and `namespace` are banned; use `const` objects instead.
 - **`react-hooks/static-components`** — never define a React component inside another component's render. Extract it to module scope.
 - **`react-hooks/set-state-in-render`** — use `useState(() => compute())` lazy initializer instead of `useEffect(() => setState(compute()), [])`.
+- **`react-hooks/set-state-in-effect`** — don't call `setState` synchronously inside `useEffect`. Use `useMemo` for derived state or `useCallback` for event-driven updates.
+- **`react-hooks/refs`** — don't access or mutate `ref.current` during render. Move ref access into event handlers or effects.
 - **`no-useless-assignment`** — don't assign a value to a `let` and then unconditionally reassign before reading. Use `const` or restructure.
 - **`preserve-caught-error`** — when re-throwing, use `throw new Error(msg, { cause: e })`.
 - **`filter(Boolean)` doesn't narrow** — use `.filter((t): t is T => t !== undefined)`.
@@ -51,7 +53,7 @@ These are enforced and will fail build or lint:
 - "All Tools" link replaces "Recent" as the first sidebar item.
 - No code comments unless explicitly requested.
 - No `zustand`; state is `useState` + `localStorage`.
-- No i18n.
+- i18n: `src/i18n/locales.ts` has `en` and `zh` translations. Use `useLocale()` hook to access `t(key)` for translated strings. New UI text must be added to both `en` and `zh` objects.
 
 ## Build Warning
 

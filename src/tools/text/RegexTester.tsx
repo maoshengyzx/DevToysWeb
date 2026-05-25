@@ -2,6 +2,7 @@ import { useState, useMemo } from "react"
 import { useLocale } from "@/i18n/useLocale"
 import { Textarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
+import { Trash2 } from "lucide-react"
 import { ErrorBanner } from "@/components/ui/error-banner"
 
 const COMMON_PATTERNS = [
@@ -28,6 +29,9 @@ export function RegexTester() {
   const [testString, setTestString] = useState("")
   const [selectedFlags, setSelectedFlags] = useState(new Set(["g"]))
 
+  const MAX_MATCHES = 5000
+  const MAX_STEPS = 100000
+
   const { matches, error } = useMemo(() => {
     if (!regex) return { matches: [], error: "" }
     try {
@@ -36,7 +40,13 @@ export function RegexTester() {
       const results: { text: string; index: number; groups: string[] }[] = []
       let match: RegExpExecArray | null
       const seen = new Set<number>()
+      let steps = 0
       while ((match = re.exec(testString)) !== null) {
+        steps++
+        if (steps > MAX_STEPS) {
+          return { matches: results, error: "Regex execution timed out — possible catastrophic backtracking" }
+        }
+        if (results.length >= MAX_MATCHES) break
         if (match.index === re.lastIndex) re.lastIndex++
         if (seen.has(match.index)) break
         seen.add(match.index)
@@ -92,6 +102,10 @@ export function RegexTester() {
             </Button>
           ))}
         </div>
+        <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => { setRegex(""); setTestString(""); }}>
+          <Trash2 className="h-3.5 w-3.5" />
+          {t("shared.clear")}
+        </Button>
       </div>
       <div className="flex-1 overflow-auto p-6 space-y-4">
         <div className="flex flex-col gap-2">

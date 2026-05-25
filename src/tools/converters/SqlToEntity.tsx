@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Textarea, ReadOnlyTextarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, Trash2 } from "lucide-react"
@@ -364,36 +364,28 @@ const LANG_HAS_LOMBOK: Set<Lang> = new Set(["java"])
 export function SqlToEntity() {
   const { t } = useLocale()
   const [input, setInput] = useState("")
-  const [output, setOutput] = useState("")
-  const [error, setError] = useState("")
   const [lang, setLang] = useState<Lang>("java")
   const [jpa, setJpa] = useState(true)
   const [lombok, setLombok] = useState(true)
   const [copied, handleCopy] = useCopyToClipboard()
 
-  const handleConvert = () => {
-    if (!input.trim()) return
+  const { output, error } = useMemo(() => {
+    if (!input.trim()) return { output: "", error: "" }
     try {
       const tables = parseSql(input)
       const result = generate(tables, lang, { jpa, lombok })
-      setOutput(result)
-      setError("")
+      return { output: result, error: "" }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to parse SQL")
-      setOutput("")
+      return { output: "", error: e instanceof Error ? e.message : "Failed to parse SQL" }
     }
-  }
+  }, [input, lang, jpa, lombok])
 
   const handleClear = () => {
     setInput("")
-    setOutput("")
-    setError("")
   }
 
   const loadExample = () => {
     setInput(EXAMPLE_SQL)
-    setOutput("")
-    setError("")
   }
 
   return (
@@ -459,7 +451,6 @@ export function SqlToEntity() {
         </div>
         {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
         <div className="mt-4 flex gap-2">
-          <Button className="cursor-pointer" onClick={handleConvert}>{t("shared.convert")}</Button>
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)} disabled={!output}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? t("shared.copied") : t("shared.copyOutput")}

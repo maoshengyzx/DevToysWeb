@@ -454,8 +454,10 @@ export function ImageEditor() {
                   step={step}
                   value={filters[key]}
                   onChange={(e) => {
-                    snapCurrent()
                     setFilters({ ...filters, [key]: Number(e.target.value) })
+                  }}
+                  onPointerUp={() => {
+                    snapCurrent()
                   }}
                   className="flex-1 h-1.5 accent-indigo-500 cursor-pointer"
                 />

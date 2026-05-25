@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Textarea, ReadOnlyTextarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, Trash2 } from "lucide-react"
@@ -83,26 +83,19 @@ function jsonToTs(json: string): string {
 export function JsonToTypeScript() {
   const { t } = useLocale()
   const [input, setInput] = useState("")
-  const [output, setOutput] = useState("")
-  const [error, setError] = useState("")
   const [copied, handleCopy] = useCopyToClipboard()
 
-  const handleConvert = () => {
-    if (!input.trim()) return
+  const { output, error } = useMemo(() => {
+    if (!input.trim()) return { output: "", error: "" }
     try {
-      const result = jsonToTs(input)
-      setOutput(result)
-      setError("")
+      return { output: jsonToTs(input), error: "" }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid JSON")
-      setOutput("")
+      return { output: "", error: e instanceof Error ? e.message : "Invalid JSON" }
     }
-  }
+  }, [input])
 
   const handleClear = () => {
     setInput("")
-    setOutput("")
-    setError("")
   }
 
   return (
@@ -124,7 +117,6 @@ export function JsonToTypeScript() {
         </div>
         {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
         <div className="mt-4 flex gap-2">
-          <Button className="cursor-pointer" onClick={handleConvert}>{t("shared.convert")}</Button>
           <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? t("shared.copied") : t("shared.copyOutput")}

@@ -143,7 +143,10 @@ export function HtmlCssJsFormatter() {
       <div className="flex-1 overflow-auto p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">{t("tool.htmlCssJsFormatter.input")}</label>
+            <div className="flex items-center justify-between min-h-[36px]">
+              <label className="text-sm font-medium text-foreground">{t("tool.htmlCssJsFormatter.input")}</label>
+              <div />
+            </div>
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -151,7 +154,7 @@ export function HtmlCssJsFormatter() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between min-h-[36px]">
               <label className="text-sm font-medium text-foreground">{t("tool.htmlCssJsFormatter.output")}</label>
               {mode === "minify" && output && input.trim() && (
                 <span className="text-xs text-muted-foreground">

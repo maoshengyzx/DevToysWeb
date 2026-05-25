@@ -20,6 +20,14 @@ function base64ToBytes(s: string): Uint8Array {
   return Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
 }
 
+function isLikelyBase64(s: string): boolean {
+  const trimmed = s.replace(/\s/g, "")
+  if (trimmed.length < 8) return false
+  if (trimmed.length % 4 !== 0) return false
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(trimmed)) return false
+  try { atob(trimmed); return true } catch { return false }
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -42,6 +50,11 @@ export function Base64Encoder() {
     setInput(value)
     setError("")
     if (!value.trim()) { setOutput(""); return }
+    if (mode === "encode" && isLikelyBase64(value)) {
+      setError("Input appears to already be Base64 encoded. Use decode mode instead.")
+      setOutput("")
+      return
+    }
     try {
       setOutput(mode === "encode" ? encodeText(value) : decodeText(value))
     } catch {
@@ -56,6 +69,11 @@ export function Base64Encoder() {
     setInput(output)
     setError("")
     if (!output.trim()) { setOutput(""); return }
+    if (newMode === "encode" && isLikelyBase64(output)) {
+      setError("Input appears to already be Base64 encoded. Use decode mode instead.")
+      setOutput("")
+      return
+    }
     try {
       setOutput(newMode === "encode" ? encodeText(output) : decodeText(output))
     } catch {
@@ -68,6 +86,11 @@ export function Base64Encoder() {
     setMode(newMode)
     setError("")
     if (!input.trim()) { setOutput(""); return }
+    if (newMode === "encode" && isLikelyBase64(input)) {
+      setError("Input appears to already be Base64 encoded. Use decode mode instead.")
+      setOutput("")
+      return
+    }
     try {
       setOutput(newMode === "encode" ? encodeText(input) : decodeText(input))
     } catch {

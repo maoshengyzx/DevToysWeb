@@ -1,5 +1,7 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { Helmet } from "react-helmet-async"
+import { getSeoMeta, getHomepageSeoMeta } from "@/lib/seo"
 import {
   Wrench,
   Search,
@@ -303,7 +305,7 @@ function App() {
 
   const isSearching = search.trim().length > 0
 
-  const filteredCategories = toolCategories
+  const filteredCategories = useMemo(() => toolCategories
     .map((category) => ({
       ...category,
       tools: isSearching
@@ -313,10 +315,10 @@ function App() {
           )
         : category.tools,
     }))
-    .filter((category) => category.tools.length > 0)
+    .filter((category) => category.tools.length > 0), [isSearching, search, t])
 
-  const favoriteTools = Array.from(favorites).map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined)
-  const recentTools = recent.map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined)
+  const favoriteTools = useMemo(() => Array.from(favorites).map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined), [favorites])
+  const recentTools = useMemo(() => recent.map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined), [recent])
 
   const toggleDarkMode = () => {
     setDarkMode((prev) => {
@@ -331,8 +333,27 @@ function App() {
     setLocale(locale === "en" ? "zh" : "en")
   }
 
+  const seoMeta = activeToolId
+    ? getSeoMeta(activeToolId)
+    : getHomepageSeoMeta()
+
   return (
-    <div className="flex h-screen">
+    <>
+      <Helmet>
+        <html lang={locale === "zh" ? "zh-CN" : "en"} />
+        <title>{seoMeta?.title ?? "DevToysWeb"}</title>
+        <meta name="description" content={seoMeta?.description ?? "Online developer tools"} />
+        <meta name="keywords" content={seoMeta?.keywords ?? "developer tools"} />
+        <link rel="canonical" href={`https://devtoysweb.pages.dev${activeToolId ? `/${activeToolId}` : ""}`} />
+        <meta property="og:title" content={seoMeta?.title ?? "DevToysWeb"} />
+        <meta property="og:description" content={seoMeta?.description ?? "Online developer tools collection"} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`https://devtoysweb.pages.dev${activeToolId ? `/${activeToolId}` : ""}`} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seoMeta?.title ?? "DevToysWeb"} />
+        <meta name="twitter:description" content={seoMeta?.description ?? "Online developer tools collection"} />
+      </Helmet>
+      <div className="flex h-screen">
       <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background text-sidebar-foreground">
         <div className="flex items-center gap-2 px-4 py-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
@@ -551,6 +572,7 @@ function App() {
         )}
       </main>
     </div>
+    </>
   )
 }
 

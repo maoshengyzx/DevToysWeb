@@ -219,10 +219,10 @@ export function CsvToJson() {
           )}
           <div className="h-4 w-px bg-border" />
           <input type="file" accept=".csv,.json,text/csv,application/json" className="hidden" onChange={handleFileUpload} id="csv-json-file-input" />
-          <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => document.getElementById("csv-json-file-input")?.click()}>
+          {/* <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => document.getElementById("csv-json-file-input")?.click()}>
             <Upload className="h-3.5 w-3.5" />
             {t("shared.upload")}
-          </Button>
+          </Button> */}
           <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={handleSwap}>
             <ArrowDownUp className="h-3.5 w-3.5" />
             {t("shared.swap")}
