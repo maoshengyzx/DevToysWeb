@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://devtoysweb.pages.dev//sitemap.xml
+Sitemap: https://devtoysweb.pages.dev/sitemap.xml
