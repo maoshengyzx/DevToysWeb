@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Helmet } from "react-helmet-async"
 import { getSeoMeta, getHomepageSeoMeta } from "@/lib/seo"
@@ -305,7 +305,7 @@ function App() {
 
   const isSearching = search.trim().length > 0
 
-  const filteredCategories = toolCategories
+  const filteredCategories = useMemo(() => toolCategories
     .map((category) => ({
       ...category,
       tools: isSearching
@@ -315,10 +315,10 @@ function App() {
           )
         : category.tools,
     }))
-    .filter((category) => category.tools.length > 0)
+    .filter((category) => category.tools.length > 0), [isSearching, search, t])
 
-  const favoriteTools = Array.from(favorites).map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined)
-  const recentTools = recent.map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined)
+  const favoriteTools = useMemo(() => Array.from(favorites).map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined), [favorites])
+  const recentTools = useMemo(() => recent.map((id) => getToolById(id)).filter((t): t is ToolDefinition => t !== undefined), [recent])
 
   const toggleDarkMode = () => {
     setDarkMode((prev) => {

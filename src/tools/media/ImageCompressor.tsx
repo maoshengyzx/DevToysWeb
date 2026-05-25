@@ -18,6 +18,7 @@ export function ImageCompressor() {
   const [resultInfo, setResultInfo] = useState({ size: 0, width: 0, height: 0 })
   const [error, setError] = useState("")
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const sourceUrlRef = useRef<string>("")
 
   const processImage = (img: HTMLImageElement) => {
     const canvas = canvasRef.current
@@ -52,7 +53,9 @@ export function ImageCompressor() {
     setResultUrl("")
     setResultInfo({ size: 0, width: 0, height: 0 })
 
+    if (sourceUrlRef.current) URL.revokeObjectURL(sourceUrlRef.current)
     const url = URL.createObjectURL(file)
+    sourceUrlRef.current = url
     setSourceUrl(url)
     setSourceInfo({ name: file.name, size: file.size, width: 0, height: 0 })
 

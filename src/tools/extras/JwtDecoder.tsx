@@ -1,31 +1,32 @@
 import { useState, useMemo } from "react"
 import { Textarea } from "@/components/ui/shared"
 import { Button } from "@/components/ui/button"
-import { Copy, Check } from "lucide-react"
+import { Copy, Check, Trash2 } from "lucide-react"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { useLocale } from "@/i18n/useLocale"
 
-function decodeJwt(token: string): { header: object; payload: object; error?: string } | null {
+function decodeJwt(token: string): { header: object; payload: object; displayPayload: object; error?: string } | null {
   try {
     const parts = token.trim().split(".")
     if (parts.length !== 3) return null
     const header = JSON.parse(atob(parts[0].replace(/-/g, "+").replace(/_/g, "/")))
     const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")))
 
+    const displayPayload: Record<string, unknown> = { ...payload }
     if (payload.exp) {
-      payload["_exp_readable"] = new Date(payload.exp * 1000).toLocaleString()
+      displayPayload["_exp_readable"] = new Date(payload.exp * 1000).toLocaleString()
     }
     if (payload.iat) {
-      payload["_iat_readable"] = new Date(payload.iat * 1000).toLocaleString()
+      displayPayload["_iat_readable"] = new Date(payload.iat * 1000).toLocaleString()
     }
     if (payload.nbf) {
-      payload["_nbf_readable"] = new Date(payload.nbf * 1000).toLocaleString()
+      displayPayload["_nbf_readable"] = new Date(payload.nbf * 1000).toLocaleString()
     }
 
-    return { header, payload }
+    return { header, payload, displayPayload }
   } catch {
-    return { header: {}, payload: {}, error: "Invalid JWT token" }
+    return { header: {}, payload: {}, displayPayload: {}, error: "Invalid JWT token" }
   }
 }
 
@@ -100,6 +101,10 @@ export function JwtDecoder() {
             placeholder={t("tool.jwtDecoder.placeholder")}
             className="min-h-[120px]"
           />
+          <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer w-fit" onClick={() => { setInput(""); setVerifyResult(null); }}>
+            <Trash2 className="h-3.5 w-3.5" />
+            {t("shared.clear")}
+          </Button>
         </div>
         {decoded && (
           <>
@@ -123,13 +128,13 @@ export function JwtDecoder() {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-foreground">{t("tool.jwtDecoder.payload")}</label>
-                    <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(JSON.stringify(decoded.payload, null, 2), "payload")}>
+                    <Button variant="ghost" size="sm" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(JSON.stringify(decoded.displayPayload, null, 2), "payload")}>
                       {copiedKey === "payload" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                       {copiedKey === "payload" ? t("shared.copied") : t("shared.copy")}
                     </Button>
                   </div>
                   <pre className="overflow-auto rounded-md border border-border bg-muted p-3 text-xs font-mono text-foreground">
-                    {JSON.stringify(decoded.payload, null, 2)}
+                    {JSON.stringify(decoded.displayPayload, null, 2)}
                   </pre>
                 </div>
                 <details className="rounded-md border border-border">

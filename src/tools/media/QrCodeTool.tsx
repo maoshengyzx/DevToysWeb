@@ -46,13 +46,14 @@ export function QrCodeTool() {
     setDecodeError("")
 
     const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
     img.onload = () => {
       const canvas = decodeCanvasRef.current
-      if (!canvas) return
+      if (!canvas) { URL.revokeObjectURL(objectUrl); return }
       canvas.width = img.width
       canvas.height = img.height
       const ctx = canvas.getContext("2d")
-      if (!ctx) return
+      if (!ctx) { URL.revokeObjectURL(objectUrl); return }
       ctx.drawImage(img, 0, 0)
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
       const code = jsQR(imageData.data, imageData.width, imageData.height)
@@ -61,8 +62,10 @@ export function QrCodeTool() {
       } else {
               setDecodeError(t("tool.qrCode.noQrFound"))
       }
+      URL.revokeObjectURL(objectUrl)
     }
-    img.src = URL.createObjectURL(file)
+    img.onerror = () => { setDecodeError("Failed to load image"); URL.revokeObjectURL(objectUrl) }
+    img.src = objectUrl
   }
 
   return (

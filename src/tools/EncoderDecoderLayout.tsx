@@ -51,14 +51,25 @@ export function EncoderDecoder({
 
   const handleModeSwitch = () => {
     const newMode = mode === "encode" ? "decode" : "encode"
-    setMode(newMode)
-    setInput(output)
     if (!output.trim()) {
+      setMode(newMode)
+      setInput("")
       setOutput("")
       setError("")
       return
     }
-    convert(output, newMode === "encode" ? encode : decode)
+    try {
+      const result = newMode === "encode" ? encode(output) : decode(output)
+      setInput(output)
+      setOutput(result)
+      setMode(newMode)
+      setError("")
+    } catch (e) {
+      setInput(output)
+      setMode(newMode)
+      setOutput("")
+      setError(e instanceof Error ? e.message : "Conversion failed")
+    }
   }
 
   const handleModeButton = (newMode: "encode" | "decode") => {
