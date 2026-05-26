@@ -25,7 +25,27 @@ No test framework is configured.
 - Tool directories: `src/tools/{converters,encoders,formatters,generators,text,extras,media,web}/`. Shared logic goes in `src/tools/extras/utils.ts`.
 - Shared layouts: `EncoderDecoderLayout.tsx` (encode/decode with swap), `FormatterLayout.tsx` (format/minify with indent options).
 - Shared UI: `src/components/ui/shared.tsx` → `Textarea`, `ReadOnlyTextarea`, `Select`. `src/components/ui/error-banner.tsx` → `ErrorBanner`. `src/hooks/useCopyToClipboard.ts` for copy buttons.
-- Adding a new tool: (1) create component in the right directory, (2) import in `registry.ts`, (3) add `ToolDefinition` entry with a `lucide-react` icon.
+- Adding a new tool requires updating **5 places** (missing any causes silent breakage):
+  1. Create component in the correct tool subdirectory
+  2. Import + add `ToolDefinition` to `registry.ts`
+  3. Add per-tool SEO metadata in `src/lib/seo.ts` (Helmet falls back to defaults otherwise)
+  4. Add the toolId to the `toolIds` array in `vite.config.ts` (missing = no sitemap entry)
+  5. Add translated label/desc keys in both `en` and `zh` objects in `src/i18n/locales.ts`, AND entries in the `toolLabelKeys` / `toolDescKeys` maps in `App.tsx` (these are separate from registry labels — they drive the sidebar/welcome page translations)
+
+## SEO & Sitemap
+
+- `src/lib/seo.ts` stores per-tool SEO metadata (title, description, keywords). Exported as `getSeoMeta(slug)` and `getHomepageSeoMeta()`.
+- `react-helmet-async` is used in `main.tsx` (`<HelmetProvider>` wraps the app) and `App.tsx` (`<Helmet>` sets `<title>`, `<meta description>`, `<meta keywords>`, `<link canonical>`, `og:*`, `twitter:*` per tool).
+- **JSON-LD structured data** is rendered in `App.tsx` inside `<Helmet>`: `WebSite` schema for homepage, `WebApplication` schema for tool pages (with `applicationCategory`, `operatingSystem`, `offers: price=0`).
+- Sitemap is auto-generated at build time by a custom Vite plugin in `vite.config.ts`. The `toolIds` array there is **completely separate** from the registry — adding a new tool to registry but not to `toolIds` silently excludes it from the sitemap.
+- **`public/robots.txt`** points to the sitemap and allows all crawlers.
+
+## Cloudflare Pages Deployment
+
+- `public/_redirects` — `/*  /index.html  200` is the SPA catch-all. **The `/*` rule previously intercepted `/sitemap.xml` and `/robots.txt`**, causing Google to report "Sitemap is HTML". Explicit rules for those paths must precede the catch-all.
+- `public/_headers` — security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`) and caching (immutable on `/assets/*`, short TTLs on sitemap/robots).
+- `public/404.html` — Cloudflare Pages serves this for unmatched paths. It redirects to `/` so the SPA router takes over.
+- Site deployed at `https://devtoysweb.cn` (hardcoded in `vite.config.ts`, `index.html`, `robots.txt`, and `App.tsx`). **`devtoysweb.pages.dev` is not a public endpoint** — all canonical URLs, OG tags, and sitemap reference `devtoysweb.cn`.
 
 ## TypeScript & ESLint Gotchas
 
