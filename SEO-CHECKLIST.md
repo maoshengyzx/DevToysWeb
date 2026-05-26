@@ -2,6 +2,8 @@
 
 部署到 Cloudflare Pages 后，按以下步骤操作以确保 Google 正确收录和索引。
 
+> **注意**：本项目采用 SPA（单页应用）模式，所有路由通过 `/* /index.html 200` 由 React Router 客户端接管。因此 Googlebot 需要执行 JavaScript 才能看到每个工具页面的 `<title>`、`<meta>` 和 JSON-LD。虽然 `react-helmet-async` 在运行时动态注入这些标签，但 Google 的抓取预算（crawl budget）可能因此受限。如果你希望获得更好的 SEO 效果（让 Google 在首次抓取时就看到完整 HTML），可以考虑将来迁移到预渲染方案。
+
 ---
 
 ## 1. 验证 Google Search Console 所有权
