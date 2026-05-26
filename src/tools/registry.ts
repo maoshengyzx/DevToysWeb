@@ -1,5 +1,5 @@
-import type { ReactNode } from "react"
-import type { ElementType } from "react"
+import type { ElementType, LazyExoticComponent, ComponentType } from "react"
+import { lazy } from "react"
 import {
   ArrowLeftRight, Hash, Code2, FileText, Binary, Lock, AlignLeft,
   Boxes, Shield, Type, Search, Palette, TextCursorInput,
@@ -10,52 +10,51 @@ import {
   Gauge, FileSearch, Bot, GitCompareArrows,
 } from "lucide-react"
 
-import { NumberBaseConverter } from "./converters/NumberBaseConverter"
-import { JsonYamlConverter } from "./converters/JsonYamlConverter"
-import { JsonToTypeScript } from "./converters/JsonToTypeScript"
-import { UnitConverter } from "./converters/UnitConverter"
-import { SqlToEntity } from "./converters/SqlToEntity"
-import { CsvToJson } from "./converters/CsvToJson"
-import { HtmlEncoder } from "./encoders/HtmlEncoder"
-import { UrlEncoder } from "./encoders/UrlEncoder"
-import { Base64Encoder } from "./encoders/Base64Encoder"
-import { JwtDecoder } from "./extras/JwtDecoder"
-import { JsonFormatter } from "./formatters/JsonFormatter"
-import { JsonDiff } from "./extras/JsonDiff"
-import { SqlFormatter } from "./formatters/SqlFormatter"
-import { XmlFormatter } from "./formatters/XmlFormatter"
-import { HtmlCssJsFormatter } from "./formatters/HtmlCssJsFormatter"
-import { UuidGenerator } from "./generators/UuidGenerator"
-import { LoremIpsumGenerator } from "./generators/LoremIpsumGenerator"
-import { HashGenerator } from "./generators/HashGenerator"
-import { PasswordGenerator } from "./extras/PasswordGenerator"
-import { CaseConverter } from "./text/CaseConverter"
-import { RegexTester } from "./text/RegexTester"
-import { MarkdownPreview } from "./text/MarkdownPreview"
-import { TextDiff } from "./extras/TextDiff"
-import { TextDedup } from "./text/TextDedup"
-import { WordCount } from "./text/WordCount"
-import { CronParser } from "./extras/CronParser"
-import { ColorConverter } from "./extras/ColorConverter"
-import { HttpStatusCodeLookup } from "./extras/HttpStatusCodeLookup"
-import { ApiRequestDebugger } from "./extras/ApiRequestDebugger"
-import { TimestampConverter } from "./extras/TimestampConverter"
-import { QrCodeTool } from "./media/QrCodeTool"
-import { ImageCompressor } from "./media/ImageCompressor"
-import { IcoGenerator } from "./media/IcoGenerator"
-import { SvgConverter } from "./media/SvgConverter"
-import { ImageEditor } from "./media/ImageEditor"
-
-import { WebsiteSpeedTest } from "./web/WebsiteSpeedTest"
-import { SeoMetaAnalyzer } from "./web/SeoMetaAnalyzer"
-import { RobotsTxtGenerator } from "./web/RobotsTxtGenerator"
+const NumberBaseConverter = lazy(() => import("./converters/NumberBaseConverter").then((m) => ({ default: m.NumberBaseConverter })))
+const JsonYamlConverter = lazy(() => import("./converters/JsonYamlConverter").then((m) => ({ default: m.JsonYamlConverter })))
+const JsonToTypeScript = lazy(() => import("./converters/JsonToTypeScript").then((m) => ({ default: m.JsonToTypeScript })))
+const UnitConverter = lazy(() => import("./converters/UnitConverter").then((m) => ({ default: m.UnitConverter })))
+const SqlToEntity = lazy(() => import("./converters/SqlToEntity").then((m) => ({ default: m.SqlToEntity })))
+const CsvToJson = lazy(() => import("./converters/CsvToJson").then((m) => ({ default: m.CsvToJson })))
+const HtmlEncoder = lazy(() => import("./encoders/HtmlEncoder").then((m) => ({ default: m.HtmlEncoder })))
+const UrlEncoder = lazy(() => import("./encoders/UrlEncoder").then((m) => ({ default: m.UrlEncoder })))
+const Base64Encoder = lazy(() => import("./encoders/Base64Encoder").then((m) => ({ default: m.Base64Encoder })))
+const JwtDecoder = lazy(() => import("./extras/JwtDecoder").then((m) => ({ default: m.JwtDecoder })))
+const JsonFormatter = lazy(() => import("./formatters/JsonFormatter").then((m) => ({ default: m.JsonFormatter })))
+const JsonDiff = lazy(() => import("./extras/JsonDiff").then((m) => ({ default: m.JsonDiff })))
+const SqlFormatter = lazy(() => import("./formatters/SqlFormatter").then((m) => ({ default: m.SqlFormatter })))
+const XmlFormatter = lazy(() => import("./formatters/XmlFormatter").then((m) => ({ default: m.XmlFormatter })))
+const HtmlCssJsFormatter = lazy(() => import("./formatters/HtmlCssJsFormatter").then((m) => ({ default: m.HtmlCssJsFormatter })))
+const UuidGenerator = lazy(() => import("./generators/UuidGenerator").then((m) => ({ default: m.UuidGenerator })))
+const LoremIpsumGenerator = lazy(() => import("./generators/LoremIpsumGenerator").then((m) => ({ default: m.LoremIpsumGenerator })))
+const HashGenerator = lazy(() => import("./generators/HashGenerator").then((m) => ({ default: m.HashGenerator })))
+const PasswordGenerator = lazy(() => import("./extras/PasswordGenerator").then((m) => ({ default: m.PasswordGenerator })))
+const CaseConverter = lazy(() => import("./text/CaseConverter").then((m) => ({ default: m.CaseConverter })))
+const RegexTester = lazy(() => import("./text/RegexTester").then((m) => ({ default: m.RegexTester })))
+const MarkdownPreview = lazy(() => import("./text/MarkdownPreview").then((m) => ({ default: m.MarkdownPreview })))
+const TextDiff = lazy(() => import("./extras/TextDiff").then((m) => ({ default: m.TextDiff })))
+const TextDedup = lazy(() => import("./text/TextDedup").then((m) => ({ default: m.TextDedup })))
+const WordCount = lazy(() => import("./text/WordCount").then((m) => ({ default: m.WordCount })))
+const CronParser = lazy(() => import("./extras/CronParser").then((m) => ({ default: m.CronParser })))
+const ColorConverter = lazy(() => import("./extras/ColorConverter").then((m) => ({ default: m.ColorConverter })))
+const HttpStatusCodeLookup = lazy(() => import("./extras/HttpStatusCodeLookup").then((m) => ({ default: m.HttpStatusCodeLookup })))
+const ApiRequestDebugger = lazy(() => import("./extras/ApiRequestDebugger").then((m) => ({ default: m.ApiRequestDebugger })))
+const TimestampConverter = lazy(() => import("./extras/TimestampConverter").then((m) => ({ default: m.TimestampConverter })))
+const QrCodeTool = lazy(() => import("./media/QrCodeTool").then((m) => ({ default: m.QrCodeTool })))
+const ImageCompressor = lazy(() => import("./media/ImageCompressor").then((m) => ({ default: m.ImageCompressor })))
+const IcoGenerator = lazy(() => import("./media/IcoGenerator").then((m) => ({ default: m.IcoGenerator })))
+const SvgConverter = lazy(() => import("./media/SvgConverter").then((m) => ({ default: m.SvgConverter })))
+const ImageEditor = lazy(() => import("./media/ImageEditor").then((m) => ({ default: m.ImageEditor })))
+const WebsiteSpeedTest = lazy(() => import("./web/WebsiteSpeedTest").then((m) => ({ default: m.WebsiteSpeedTest })))
+const SeoMetaAnalyzer = lazy(() => import("./web/SeoMetaAnalyzer").then((m) => ({ default: m.SeoMetaAnalyzer })))
+const RobotsTxtGenerator = lazy(() => import("./web/RobotsTxtGenerator").then((m) => ({ default: m.RobotsTxtGenerator })))
 
 export interface ToolDefinition {
   id: string
   label: string
   description: string
   icon: ElementType
-  component: () => ReactNode
+  component: LazyExoticComponent<ComponentType>
 }
 
 export interface ToolCategory {
@@ -143,7 +142,7 @@ export const toolCategories: ToolCategory[] = [
     title: "Web",
     icon: Globe,
     tools: [
-      
+
       { id: "website-speed", label: "Website Speed Test", description: "Test website loading time and analyze performance", icon: Gauge, component: WebsiteSpeedTest },
       { id: "seo-meta", label: "SEO Meta Analyzer", description: "Analyze SEO meta tags, Open Graph, and Twitter cards", icon: FileSearch, component: SeoMetaAnalyzer },
       { id: "robots-txt", label: "robots.txt Generator", description: "Generate a properly formatted robots.txt file", icon: Bot, component: RobotsTxtGenerator },
@@ -164,4 +163,8 @@ export const allTools = toolCategories.flatMap((c) => c.tools)
 
 export function getToolById(id: string): ToolDefinition | undefined {
   return allTools.find((t) => t.id === id)
+}
+
+export function getCategoryByToolId(id: string): ToolCategory | undefined {
+  return toolCategories.find((c) => c.tools.some((t) => t.id === id))
 }

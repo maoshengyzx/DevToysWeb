@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, Suspense } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Helmet } from "react-helmet-async"
 import { getSeoMeta, getHomepageSeoMeta } from "@/lib/seo"
@@ -13,12 +13,14 @@ import {
   Clock,
   Mail,
   Languages,
+  Home,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { toolCategories, getToolById } from "@/tools/registry"
+import { toolCategories, getToolById, getCategoryByToolId } from "@/tools/registry"
 import type { ToolDefinition } from "@/tools/registry"
 import { useLocale } from "@/i18n/useLocale"
 import type { TranslationKey } from "@/i18n/locales"
+import { ToolInfoPanel } from "@/components/ToolInfoPanel"
 
 const FAVORITES_KEY = "devtoysweb-favorites"
 const THEME_KEY = "devtoysweb-theme"
@@ -337,6 +339,54 @@ function App() {
     ? getSeoMeta(activeToolId)
     : getHomepageSeoMeta()
 
+  const activeCategory = activeToolId ? getCategoryByToolId(activeToolId) : null
+
+  const jsonLdApp = activeToolId && seoMeta
+    ? {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        name: seoMeta.title.replace(" - DevToysWeb", ""),
+        description: seoMeta.description,
+        url: `https://devtoysweb.cn/${activeToolId}`,
+        applicationCategory: "DeveloperApplication",
+        operatingSystem: "All",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      }
+    : {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "DevToysWeb",
+        url: "https://devtoysweb.cn",
+        description: "A collection of online developer tools including converters, encoders, formatters, generators, text tools, media tools, and web utilities.",
+      }
+
+  const breadcrumbLd = activeToolId && activeCategory
+    ? {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://devtoysweb.cn/",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: t(categoryKeyMap[activeCategory.title] ?? "cat.converters"),
+            item: "https://devtoysweb.cn/",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: seoMeta?.title.replace(" - DevToysWeb", "") ?? activeToolId,
+            item: `https://devtoysweb.cn/${activeToolId}`,
+          },
+        ],
+      }
+    : null
+
   return (
     <>
       <Helmet>
@@ -349,9 +399,17 @@ function App() {
         <meta property="og:description" content={seoMeta?.description ?? "Online developer tools collection"} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`https://devtoysweb.cn${activeToolId ? `/${activeToolId}` : ""}`} />
+        <meta property="og:image" content="https://devtoysweb.cn/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={seoMeta?.title ?? "DevToysWeb"} />
         <meta name="twitter:description" content={seoMeta?.description ?? "Online developer tools collection"} />
+        <meta name="twitter:image" content="https://devtoysweb.cn/og-image.png" />
+        <script type="application/ld+json">{JSON.stringify(jsonLdApp)}</script>
+        {breadcrumbLd && (
+          <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
+        )}
       </Helmet>
       <div className="flex h-screen">
       <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background text-sidebar-foreground">
@@ -563,8 +621,39 @@ function App() {
                 <p className="hidden sm:block text-xs text-muted-foreground truncate">{t(toolDescKeys[activeTool.id] ?? "tool.unknown" as TranslationKey)}</p>
               </div>
             </div>
+            {activeCategory && (
+              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 border-b border-border bg-muted/20 px-4 py-1.5 text-[11px] text-muted-foreground md:px-6">
+                <button
+                  onClick={() => navigate("/")}
+                  className="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <Home className="h-3 w-3" />
+                  <span>Home</span>
+                </button>
+                <ChevronRight className="h-3 w-3" />
+                <span className="truncate">{t(categoryKeyMap[activeCategory.title] ?? "cat.converters")}</span>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-foreground truncate">
+                  {t(toolLabelKeys[activeTool.id] ?? "tool.unknown" as TranslationKey)}
+                </span>
+              </nav>
+            )}
             <div className="flex-1 overflow-auto">
-              <activeTool.component />
+              <Suspense fallback={
+                <div className="flex h-full items-center justify-center text-muted-foreground">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <span className="text-sm">Loading...</span>
+                  </div>
+                </div>
+              }>
+                <activeTool.component />
+              </Suspense>
+              <ToolInfoPanel
+                toolId={activeTool.id}
+                toolLabel={t(toolLabelKeys[activeTool.id] ?? "tool.unknown" as TranslationKey)}
+                toolDesc={t(toolDescKeys[activeTool.id] ?? "tool.unknown" as TranslationKey)}
+              />
             </div>
           </div>
         ) : (
