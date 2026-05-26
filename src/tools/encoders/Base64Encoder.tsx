@@ -326,93 +326,89 @@ function FileEncode({ onError }: { onError: (err: string) => void }) {
     }
   }
 
-  if (mode === "decode") {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Button variant="default" size="sm" className="cursor-pointer">{t("tool.base64.decodeTab")}</Button>
-          <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setMode("encode")}>{t("tool.base64.encodeTab")}</Button>
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">{t("tool.base64.base64String")}</label>
-          <Textarea
-            value={decodeInput}
-            onChange={(e) => setDecodeInput(e.target.value)}
-            placeholder={t("tool.base64.base64Placeholder")}
-            className="min-h-[120px]"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">{t("tool.base64.fileName")}</label>
-            <input
-              type="text"
-              value={decodeFileName}
-              onChange={(e) => setDecodeFileName(e.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">{t("tool.base64.mimeType")}</label>
-            <input
-              type="text"
-              value={decodeMime}
-              onChange={(e) => setDecodeMime(e.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            />
-          </div>
-        </div>
-        <Button className="gap-1.5 cursor-pointer" onClick={decodeAndDownload}>
-          <Download className="h-3.5 w-3.5" />
-          {t("tool.base64.downloadFile")}
-        </Button>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setMode("decode")}>{t("tool.base64.decodeTab")}</Button>
-        <Button variant="default" size="sm" className="cursor-pointer">{t("tool.base64.encodeTab")}</Button>
+        <Button variant={mode === "decode" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => setMode("decode")}>{t("tool.base64.decodeTab")}</Button>
+        <Button variant={mode === "encode" ? "default" : "outline"} size="sm" className="cursor-pointer" onClick={() => setMode("encode")}>{t("tool.base64.encodeTab")}</Button>
       </div>
-      <div
-        className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-12 transition-colors cursor-pointer ${file ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/50"}`}
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        onClick={() => document.getElementById("base64-file-input")?.click()}
-      >
-        {file ? (
-          <div className="flex flex-col items-center gap-2">
-            <FileText className="h-8 w-8 text-primary" />
-            <p className="text-sm font-medium text-foreground">{file.name}</p>
-            <p className="text-xs text-muted-foreground">{formatSize(file.size)} — {file.type || t("tool.base64.fileSize")}</p>
-          </div>
-        ) : (
-          <>
-            <Upload className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">{t("tool.base64.dropFile")}</p>
-            <p className="text-xs text-muted-foreground">{t("tool.base64.supportedFileFormats")}</p>
-          </>
-        )}
-        <input id="base64-file-input" type="file" className="hidden" onChange={handleUpload} />
-      </div>
-      {base64 && (
+      {mode === "decode" ? (
         <>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">{t("tool.base64.base64String")} ({formatSize(new Blob([base64]).size)})</label>
-            <ReadOnlyTextarea value={base64} className="min-h-[100px]" />
+            <label className="text-sm font-medium text-foreground">{t("tool.base64.base64String")}</label>
+            <Textarea
+              value={decodeInput}
+              onChange={(e) => setDecodeInput(e.target.value)}
+              placeholder={t("tool.base64.base64Placeholder")}
+              className="min-h-[120px]"
+            />
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(base64)}>
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? t("shared.copied") : t("tool.base64.copyBase64")}
-            </Button>
-            <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleDownload}>
-              <Download className="h-3.5 w-3.5" />
-              {t("tool.base64.downloadOriginal")}
-            </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground">{t("tool.base64.fileName")}</label>
+              <input
+                type="text"
+                value={decodeFileName}
+                onChange={(e) => setDecodeFileName(e.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground">{t("tool.base64.mimeType")}</label>
+              <input
+                type="text"
+                value={decodeMime}
+                onChange={(e) => setDecodeMime(e.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
           </div>
+          <Button className="gap-1.5 cursor-pointer" onClick={decodeAndDownload}>
+            <Download className="h-3.5 w-3.5" />
+            {t("tool.base64.downloadFile")}
+          </Button>
+        </>
+      ) : (
+        <>
+          <div
+            className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-12 transition-colors cursor-pointer ${file ? "border-primary/30 bg-primary/5" : "border-border hover:border-primary/50"}`}
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            onClick={() => document.getElementById("base64-file-input")?.click()}
+          >
+            {file ? (
+              <div className="flex flex-col items-center gap-2">
+                <FileText className="h-8 w-8 text-primary" />
+                <p className="text-sm font-medium text-foreground">{file.name}</p>
+                <p className="text-xs text-muted-foreground">{formatSize(file.size)} — {file.type || t("tool.base64.fileSize")}</p>
+              </div>
+            ) : (
+              <>
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">{t("tool.base64.dropFile")}</p>
+                <p className="text-xs text-muted-foreground">{t("tool.base64.supportedFileFormats")}</p>
+              </>
+            )}
+            <input id="base64-file-input" type="file" className="hidden" onChange={handleUpload} />
+          </div>
+          {base64 && (
+            <>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-foreground">{t("tool.base64.base64String")} ({formatSize(new Blob([base64]).size)})</label>
+                <ReadOnlyTextarea value={base64} className="min-h-[100px]" />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={() => handleCopy(base64)}>
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? t("shared.copied") : t("tool.base64.copyBase64")}
+                </Button>
+                <Button variant="outline" className="gap-1.5 cursor-pointer" onClick={handleDownload}>
+                  <Download className="h-3.5 w-3.5" />
+                  {t("tool.base64.downloadOriginal")}
+                </Button>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

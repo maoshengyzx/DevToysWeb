@@ -361,6 +361,7 @@ export function JsonFormatter() {
   const [showTree, setShowTree] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const [processing, setProcessing] = useState(false)
+  const [activeAction, setActiveAction] = useState<string | null>(null)
   const [copied, handleCopy] = useCopyToClipboard()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const parsedRef = useRef<unknown>(null)
@@ -423,9 +424,10 @@ export function JsonFormatter() {
     }
   }, [])
 
-  const applyAction = useCallback((action: (parsed: unknown) => string) => {
+  const applyAction = useCallback((action: (parsed: unknown) => string, actionName: string) => {
     if (!input.trim()) return
     setProcessing(true)
+    setActiveAction(actionName)
     setTimeout(() => {
       try {
         const result = smartRepair(input)
@@ -446,11 +448,12 @@ export function JsonFormatter() {
 
   const processInput = useCallback((value: string) => {
     setFixes([])
-    if (!value.trim()) { setOutput(""); setError(""); return }
+    if (!value.trim()) { setOutput(""); setError(""); setActiveAction(null); return }
     try {
       if (isLarge) {
         setError("Large JSON detected. Auto-format disabled. Click a button below to format.")
         setOutput("")
+        setActiveAction(null)
         return
       }
       const result = smartRepair(value)
@@ -458,14 +461,17 @@ export function JsonFormatter() {
         setOutput(JSON.stringify(result.json, null, indent))
         setError("")
         setFixes(result.fixes)
+        setActiveAction("format")
       } else {
         setOutput(formatJson(value, indent))
         setError("")
         setFixes([])
+        setActiveAction("format")
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Invalid JSON")
       setOutput("")
+      setActiveAction(null)
     }
   }, [indent, isLarge])
 
@@ -476,18 +482,19 @@ export function JsonFormatter() {
     debounceRef.current = setTimeout(() => processInput(value), DEBOUNCE_MS)
   }, [processInput])
 
-  const handleClear = () => { setInput(""); setOutput(""); setError(""); setFixes([]); setProcessing(false) }
+  const handleClear = () => { setInput(""); setOutput(""); setError(""); setFixes([]); setProcessing(false); setActiveAction(null) }
   const handleCopyAsJsVar = () => { try { handleCopy(toJsonVariable(output || input, indent)) } catch { /* already validated */ } }
   const handleCopyAsUrlParams = () => { try { handleCopy(toUrlParams(output || input)) } catch (e) { setError(e instanceof Error ? e.message : "Cannot convert to URL params") } }
   const handleCopyPath = (path: string) => { handleCopy(path) }
 
-  const handleSortKeys = () => applyAction((obj) => JSON.stringify(sortKeysDeep(obj), null, indent))
-  const handleFlatten = () => applyAction((obj) => JSON.stringify(flatFlatten(obj, { delimiter: "." }), null, indent))
-  const handleUnflatten = () => applyAction((obj) => JSON.stringify(flatUnflatten(obj as Record<string, unknown>, { delimiter: "." }), null, indent))
-  const handleStructure = () => applyAction((obj) => extractStructure(JSON.stringify(obj), indent))
+  const handleSortKeys = () => applyAction((obj) => JSON.stringify(sortKeysDeep(obj), null, indent), "sort")
+  const handleFlatten = () => applyAction((obj) => JSON.stringify(flatFlatten(obj, { delimiter: "." }), null, indent), "flatten")
+  const handleUnflatten = () => applyAction((obj) => JSON.stringify(flatUnflatten(obj as Record<string, unknown>, { delimiter: "." }), null, indent), "unflatten")
+  const handleStructure = () => applyAction((obj) => extractStructure(JSON.stringify(obj), indent), "structure")
   const handleToMdTable = () => {
     if (!input.trim()) return
     setProcessing(true)
+    setActiveAction("toMdTable")
     setTimeout(() => {
       try {
         const result = smartRepair(input)
@@ -508,6 +515,7 @@ export function JsonFormatter() {
   const handleFromMdTable = () => {
     if (!input.trim()) return
     setProcessing(true)
+    setActiveAction("fromMdTable")
     setTimeout(() => {
       try {
         const json = markdownTableToJson(input)
@@ -604,29 +612,29 @@ export function JsonFormatter() {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button className="cursor-pointer" disabled={processing} onClick={() => applyAction((obj) => JSON.stringify(obj, null, indent))}>{t("tool.jsonFormat.format")}</Button>
-          <Button variant="outline" className="cursor-pointer" disabled={processing} onClick={() => applyAction((obj) => JSON.stringify(obj))}>{t("tool.jsonFormat.minify")}</Button>
-          <Button variant="outline" className="gap-1.5 cursor-pointer" disabled={processing} onClick={handleSortKeys}>
+          <Button size="sm" variant={activeAction === "format" ? "default" : "outline"} className="cursor-pointer" disabled={processing} onClick={() => applyAction((obj) => JSON.stringify(obj, null, indent), "format")}>{t("tool.jsonFormat.format")}</Button>
+          <Button size="sm" variant={activeAction === "minify" ? "default" : "outline"} className="cursor-pointer" disabled={processing} onClick={() => applyAction((obj) => JSON.stringify(obj), "minify")}>{t("tool.jsonFormat.minify")}</Button>
+          <Button size="sm" variant={activeAction === "sort" ? "default" : "outline"} className="gap-1.5 cursor-pointer" disabled={processing} onClick={handleSortKeys}>
             <ArrowDownUp className="h-3.5 w-3.5" />
             {t("tool.jsonFormat.sortKeys")}
           </Button>
-          <Button variant="outline" size="sm" className="cursor-pointer" disabled={processing} onClick={handleFlatten}>
+          <Button size="sm" variant={activeAction === "flatten" ? "default" : "outline"} className="cursor-pointer" disabled={processing} onClick={handleFlatten}>
             {t("tool.jsonFormat.flatten")}
           </Button>
-          <Button variant="outline" size="sm" className="cursor-pointer" disabled={processing} onClick={handleUnflatten}>
+          <Button size="sm" variant={activeAction === "unflatten" ? "default" : "outline"} className="cursor-pointer" disabled={processing} onClick={handleUnflatten}>
             {t("tool.jsonFormat.unflatten")}
           </Button>
-          <Button variant="outline" size="sm" className="cursor-pointer" disabled={processing} onClick={handleStructure}>
+          <Button size="sm" variant={activeAction === "structure" ? "default" : "outline"} className="cursor-pointer" disabled={processing} onClick={handleStructure}>
             {t("tool.jsonFormat.structure")}
           </Button>
-          <Button variant="outline" size="sm" className="cursor-pointer" disabled={processing} onClick={handleToMdTable}>
+          <Button size="sm" variant={activeAction === "toMdTable" ? "default" : "outline"} className="cursor-pointer" disabled={processing} onClick={handleToMdTable}>
             {t("tool.jsonFormat.toMdTable")}
           </Button>
-          <Button variant="outline" size="sm" className="cursor-pointer" disabled={processing} onClick={handleFromMdTable}>
+          <Button size="sm" variant={activeAction === "fromMdTable" ? "default" : "outline"} className="cursor-pointer" disabled={processing} onClick={handleFromMdTable}>
             {t("tool.jsonFormat.fromMdTable")}
           </Button>
           <div className="w-px h-6 bg-border self-center" />
-          <Button variant="outline" className="gap-1.5 cursor-pointer" disabled={processing} onClick={() => handleCopy(output)}>
+          <Button size="sm" variant="outline" className="gap-1.5 cursor-pointer" disabled={processing} onClick={() => handleCopy(output)}>
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? t("shared.copied") : t("shared.copy")}
           </Button>
@@ -638,7 +646,7 @@ export function JsonFormatter() {
             <Link className="h-3.5 w-3.5" />
             {t("tool.jsonFormat.copyAsParams")}
           </Button>
-          <Button variant="ghost" className="gap-1.5 cursor-pointer ml-auto" disabled={processing} onClick={handleClear}>
+          <Button size="sm" variant="ghost" className="gap-1.5 cursor-pointer ml-auto" disabled={processing} onClick={handleClear}>
             <Trash2 className="h-3.5 w-3.5" />
             {t("tool.jsonFormat.clear")}
           </Button>
