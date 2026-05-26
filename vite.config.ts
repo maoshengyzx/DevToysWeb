@@ -77,13 +77,8 @@ function prerenderPlugin(): Plugin {
         writeFileSync(resolve(distDir, "index.html"), homeHtml, "utf-8")
       }
 
-      // SPA mode: all routes fallback to index.html so the React Router takes over
-      const redirects = [
-        "/sitemap.xml  /sitemap.xml  200",
-        "/robots.txt  /robots.txt  200",
-      ]
-      writeFileSync(resolve(distDir, "_redirects"), redirects.join("\n") + "\n", "utf-8")
-      console.log("[prerender] SPA mode: wrote _redirects with catch-all to index.html")
+      // No _redirects file: rely on Cloudflare Pages default static file serving
+      console.log("[prerender] No _redirects generated — using Cloudflare Pages default behavior")
     },
   }
 }
