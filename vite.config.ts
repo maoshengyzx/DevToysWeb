@@ -81,7 +81,6 @@ function prerenderPlugin(): Plugin {
       const redirects = [
         "/sitemap.xml  /sitemap.xml  200",
         "/robots.txt  /robots.txt  200",
-        "/*  /index.html  200",
       ]
       writeFileSync(resolve(distDir, "_redirects"), redirects.join("\n") + "\n", "utf-8")
       console.log("[prerender] SPA mode: wrote _redirects with catch-all to index.html")
