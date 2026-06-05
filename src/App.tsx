@@ -1,4 +1,4 @@
-import { useState, useMemo, Suspense } from "react"
+import { useState, useMemo, Suspense, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Helmet } from "react-helmet-async"
 import { getSeoMeta, getHomepageSeoMeta } from "@/lib/seo"
@@ -276,6 +276,14 @@ function App() {
     else document.documentElement.classList.remove("dark")
     return isDark
   })
+
+  useEffect(() => {
+    try {
+      (window.adsbygoogle = window.adsbygoogle ?? []).push({});
+    } catch {
+      /* adblock or adsbygoogle not loaded */
+    }
+  }, [activeToolId]);
 
   const handleSelectTool = (id: string) => {
     setRecent((prev) => {
